@@ -1,7 +1,5 @@
 package org.vedibarta.app;
 
-import java.util.ArrayList;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -20,6 +18,8 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.ArrayList;
 
 public class List_View1 extends ListFragment {
 	private AlertDialog mdialog;
@@ -43,9 +43,8 @@ public class List_View1 extends ListFragment {
 		setListAdapter(adapter);
 		mTextView = (TextView) rootView.findViewById(R.id.memory);
 		mTextView.setVisibility(View.GONE);
-		//mTextView.setText("גרסא 1.8");
-		
-		if (util.isMyServiceRunning(ctx) && (boolean)((Activity) ctx).getIntent().getBooleanExtra("playing", false)) {
+
+		if (util.isMyServiceRunning(ctx) && ((Activity) ctx).getIntent().getBooleanExtra("playing", false)) {
 			Button myButton = new Button(ctx);
 			myButton.setText(R.string.backToPlayer);
 			myButton.setTextSize(18);
@@ -79,9 +78,8 @@ public class List_View1 extends ListFragment {
 											getResources().getString(
 													R.string.begin_playing),
 											Toast.LENGTH_SHORT).show();
-									Intent i = new Intent(ctx,
-											PlayerActivity.class);
-									if (util.isMyServiceRunning(ctx) && (boolean)((Activity) ctx).getIntent().getBooleanExtra("playing", false)){ 
+									Intent i = new Intent(ctx, PlayerActivity.class);
+									if (util.isMyServiceRunning(ctx) && ((Activity) ctx).getIntent().getBooleanExtra("playing", false)){
 										i.putExtra("launch", true);
 									}
 									i.putExtra("PATH", path);
@@ -91,7 +89,7 @@ public class List_View1 extends ListFragment {
 								} else {
 									Toast.makeText(
 											ctx,
-											(String) getResources().getString(
+											 getResources().getString(
 													R.string.no_internet),
 											Toast.LENGTH_LONG).show();
 								}

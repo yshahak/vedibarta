@@ -77,7 +77,7 @@ public class PlayerActivity extends Activity implements
 
 		connectionIntent = new Intent(this, PlayingService.class);
 
-		path = (String) getIntent().getStringExtra("PATH");
+		path =  getIntent().getStringExtra("PATH");
 
 		// bind to our service by first creating a new connectionIntent
 		serviceConnection = new ServiceConnection() {
@@ -92,8 +92,7 @@ public class PlayerActivity extends Activity implements
 		};
 
 		// Supply the Intent & ServiceConnection that will use for the binding
-		bindService(connectionIntent, serviceConnection,
-				Context.BIND_AUTO_CREATE);
+		bindService(connectionIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
 		// Set up broadcast receiver for doing changes in UI
 		IntentFilter filter = new IntentFilter();
@@ -101,24 +100,24 @@ public class PlayerActivity extends Activity implements
 		broadcastReceiver = new BroadcastReceiver() {
 			@Override
 			public synchronized void onReceive(Context context, Intent i) {
-				switch ((int) i.getIntExtra("STATE", 0)) {
+				switch ( i.getIntExtra("STATE", 0)) {
 				case 1:
 					playing = true;
 					play.setImageResource(R.drawable.btn_pause);
 					break;
 				case 2:
-					totalDuration = (int) i.getIntExtra("TOTAL", 0);
-					currentDuration = (long) i.getLongExtra("CURRENT", 0);
+					totalDuration =  i.getIntExtra("TOTAL", 0);
+					currentDuration =  i.getLongExtra("CURRENT", 0);
 					songTotalDurationLabel.setText(""
 							+ utils.milliSecondsToTimer((long) totalDuration));
 					// Displaying time completed playing
 					songCurrentDurationLabel
 							.setText(""
-									+ utils.milliSecondsToTimer((long) currentDuration));
+									+ utils.milliSecondsToTimer( currentDuration));
 
 					// Updating progress bar
-					int progress = (int) (utils.getProgressPercentage(
-							(long) currentDuration, (long) totalDuration));
+					int progress = (utils.getProgressPercentage(
+							 currentDuration, (long) totalDuration));
 					songProgressBar.setProgress(progress);
 					break;
 				case 3:
@@ -176,7 +175,7 @@ public class PlayerActivity extends Activity implements
 		super.onResume();
 		if (mNotificationManager != null)
 			mNotificationManager.cancel(1);
-		position = (int) getIntent().getIntExtra("POSITION", 0);
+		position = getIntent().getIntExtra("POSITION", 0);
 		trackTitle = getIntent().getStringExtra("PARASHA");
 		// for update the file about the last data of playing state
 		index = getIntent().getIntExtra("INDEX", 0);
@@ -184,11 +183,11 @@ public class PlayerActivity extends Activity implements
 		if (myPref.getInt("POSITION", 100) == position)
 			recreate = true;
 		fileExist = getIntent().getBooleanExtra("FILE_EXIST", false);
-		numberOfTracks = (int) myData.tracksNumber(position);
+		numberOfTracks = myData.tracksNumber(position);
 
 		connectionIntent.putExtra("STATE", 1);
 		if (!playing && !running) {
-			path = (String) getIntent().getStringExtra("PATH");
+			path =  getIntent().getStringExtra("PATH");
 			if (recreate || fileExist) {
 				if (recreate) {
 					count = myPref.getInt("TRACK", 1);
@@ -197,9 +196,9 @@ public class PlayerActivity extends Activity implements
 							myPref.getLong("CURRENT", 0));
 					recreate = false;
 				} else {
-					count = (int) getIntent().getIntExtra("COUNT", 1);
+					count =  getIntent().getIntExtra("COUNT", 1);
 					String myFile = myData.getPath(position, count - 1)[0];
-					path = (String) path + File.separator + myFile;
+					path = path + File.separator + myFile;
 					connectionIntent.putExtra("CURRENT", getIntent()
 							.getLongExtra("CURRENT", 0));
 				}
@@ -209,11 +208,11 @@ public class PlayerActivity extends Activity implements
 			loadClip();
 		}
 		if (playing && getIntent().getBooleanExtra("launch", false)) {
-			path = (String) getIntent().getStringExtra("PATH");
+			path =  getIntent().getStringExtra("PATH");
 			if (fileExist) {
-				count = (int) getIntent().getIntExtra("COUNT", 1);
+				count =  getIntent().getIntExtra("COUNT", 1);
 				String myFile = myData.getPath(position, count - 1)[0];
-				path = (String) path + File.separator + myFile;
+				path =  path + File.separator + myFile;
 				connectionIntent.putExtra("CURRENT",
 						getIntent().getLongExtra("CURRENT", 0));
 			} else {
