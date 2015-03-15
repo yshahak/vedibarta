@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Vedibarta</string>
+    <string name="action_settings">Settings</string>
+    <string name="chooseParasha">Choose from the table</string>
+    <string name="noParashot">There is no saved files in memory</string>
+    <string name="parashot">Parashot</string>
+    <string name="downloads">Downloads</string>
+    <string name="feedback">Feedback</string>
+    <string name="alreadyDownloaded">The file already downloaded to device</string>
+    <string name="beginDownloading">Please wait for  the download to begin</string>
+    <string name="theParashaIsDownloading">Now downloading parashat</string>
+    <string name="joinToDownloadList">The file will be add to download list</string>
+    <string name="DownloadingPart">Downloading part</string>
+    <string name="hideWindow">Hide the download window</string>
+    <string name="from">from</string>
+    <string name="download_complete">The download completed</string>
+    <string name="action_to_made">Choose action to perform</string>
+    <string name="listening">listen</string>
+    <string name="begin_playing">The file will play immediately</string>
+    <string name="no_internet">Network is not available, downloads list available to use</string>
+    <string name="downloading">Download</string>
+    <string name="full_memory">There is noenough space on memory</string>
+    <string name="spaceSD">Available SDcard space:</string>
+    <string name="space_internal">Available internal space:</string>
+    <string name="delete">Delete</string>
+    <string name="playing_parashat">Playing parashat </string>
+    <string name="return_main">Return to main screen</string>
+    <string name="marks">comments:</string>
+    <string name="feedbackSite">Send feedback</string>
+    <string name="vedibarta">Direct link to official website</string>
+    <string name="comment_success">Your comment send, thank you!</string>
+    <string name="comment_no_success">No available network, please try later</string>
+    <string name="direction">ltr</string>
+    <string name="app_dediaction">This app is dedicated in memory of Orly Kiplovitch</string>
+    <string name="developer_name">Developer : Yaakov Shahak</string>
+    <string name="missing_parameters">All fields must be complete</string>
+    <string name="email_not_valid">Must insert valid email address</string>
+    <string name="DebugLog">LOG</string>
+    <string name="backToPlayer">Back to the player</string>
+    <string name="mashov">Feedback page</string>
+    <string name="name">Name</string>
+    <string name="mailAdress">Mail address(will not be shown)</string>
+    <string name="insert_comment">Insert your comment</string>
+    <string name="Kishur_vedibarta">Direct link to official site</string>
+    
+    
+    
+
+</resources>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">\&quot;ודיברת\&quot; - פרשה עם רש\&quot;י</string>
+    <string name="action_settings">Settings</string>
+    <string name="chooseParasha">בחר את הפרשה </string>
+    <string name="noParashot">אין פרשות בזכרון המכשיר</string>
+    <string name="parashot">פרשות</string>
+    <string name="downloads">הורדות</string>
+    <string name="feedback">משוב</string>
+    <string name="alreadyDownloaded">הוקבץ כבר הורד למכשיר</string>
+    <string name="beginDownloading">המתן מעט, ההורדה מתחילה</string>
+    <string name="theParashaIsDownloading">מוריד כעת את פרשת</string>
+    <string name="joinToDownloadList">הפרשה תצטרף לרשימת ההורדות</string>
+    <string name="DownloadingPart">מוריד חלק</string>
+    <string name="hideWindow">הסתר את חלון ההורדה</string>
+    <string name="from">מתוך</string>
+    <string name="download_complete">ההורדה הושלמה</string>
+    <string name="action_to_made">בחר פעולה לביצוע</string>
+    <string name="listening">האזנה</string>
+    <string name="begin_playing">המתן לפעלת הקובץ</string>
+    <string name="no_internet">אין גישה לרשת, ניתן לשמוע קבצים מרשימת ההורדות</string>
+    <string name="downloading">הורדה</string>
+    <string name="full_memory">אין די זכרון פנוי במכשיר</string>
+    <string name="spaceSD">זכרון פנוי חיצוני:</string>
+    <string name="space_internal">זכרון פנוי פנימי:</string>
+    <string name="delete">מחיקה</string>
+    <string name="playing_parashat">מנגן את פרשת</string>
+    <string name="return_main">חוזרים למסך הראשי</string>
+    <string name="marks">הערות:</string>
+    <string name="feedbackSite">שלח משוב</string>
+    <string name="vedibarta">קישור ישיר לאתר ודיברת</string>
+    <string name="comment_success">הערתך נשלחה בהצלחה!</string>
+    <string name="comment_no_success">אין גישה לרשת, נסה במועד מאוחר יותר</string>
+    <string name="direction">rtl</string>
+    <string name="app_dediaction">האפליקציה מוקדשת לזכרה של אורלי קופלוביץ</string>
+    <string name="developer_name">מפתח : יעקב שחק</string>
+    <string name="missing_parameters">יש למלא את כל שדות הטופס</string>
+    <string name="email_not_valid">כתובת המייל שהוזנה אינה תקינה</string>
+    <string name="DebugLog">לוג מפתחים</string>
+    <string name="backToPlayer">חזור לנגן</string>
+    <string name="mashov">דף משוב</string>
+    <string name="name">שם</string>
+    <string name="mailAdress">כתובת מייל(לא תוצג)</string>
+    <string name="insert_comment">הקלד את הערתך</string>
+    <string name="Kishur_vedibarta">קישור ישיר לאתר "ודיברת"</string>
+    
+    
+
+</resources>

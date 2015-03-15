@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <TextView
+            android:id="@+id/TextViewTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:text="@string/mashov"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+    </RelativeLayout>
+
+    <EditText
+        android:id="@+id/EditTextName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/name"
+        android:inputType="textPersonName" >
+    </EditText>
+
+    <EditText
+        android:id="@+id/EditTextEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/mailAdress"
+        android:inputType="textEmailAddress" >
+    </EditText>
+
+    <EditText
+        android:id="@+id/EditTextFeedbackBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/insert_comment"
+        android:inputType="textMultiLine"
+        android:lines="5" >
+    </EditText>
+
+    <Button
+        android:id="@+id/ButtonSendFeedback"
+        android:layout_width="204dp"
+        android:layout_height="wrap_content"
+        android:text="@string/feedbackSite" >
+    </Button>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/link_vedibarta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:text="@string/Kishur_vedibarta" />
+    </RelativeLayout>
+
+</LinearLayout>
