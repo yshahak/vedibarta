@@ -33,7 +33,7 @@ public class PlayingService extends Service implements
 	Intent broadcastIntent = new Intent();
 	public final IBinder localBinder = new LocalBinder();
 	private Handler mHandler;
-	private int seekBackwardTime = 10000; // 10 seconds
+	private final int seekBackwardTime = 10000; // 10 seconds
 	AudioManager am;
 	OnAudioFocusChangeListener afChangeListener;
 
@@ -70,7 +70,7 @@ public class PlayingService extends Service implements
 			public void onPrepared(MediaPlayer mp) {
 				try {
 					prepare = true;
-					if ((long) intent.getLongExtra("CURRENT", 0) > 0)
+					if ( intent.getLongExtra("CURRENT", 0) > 0)
 						mp.seekTo((int) intent.getLongExtra("CURRENT", 0));
 					else {
 						mp.start();
@@ -84,32 +84,32 @@ public class PlayingService extends Service implements
 			}
 
 		});
-		am = (AudioManager) getApplication().getSystemService(
-				Context.AUDIO_SERVICE);
+		am = (AudioManager) getApplication().getSystemService(Context.AUDIO_SERVICE);
 		afChangeListener = new OnAudioFocusChangeListener() {
 			public void onAudioFocusChange(int focusChange) {
-				if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
-					if (mp.isPlaying()) {
-						mp.pause();
-						wasPlay = true;
-					}
-				} else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-					if (mp != null && !mp.isPlaying() && wasPlay)
-						mp.start();
-					wasPlay = false;
-				} else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
-					if (!first) {
-                        if (mp.isPlaying())
-                            mp.stop();
-						if (PlayerActivity.mNotificationManager != null) {
-							PlayerActivity.mNotificationManager.cancelAll();
-						}
-                        wasPlay = false;
-                        broadcastIntent.putExtra("STATE", 4);
-						sendBroadcast(broadcastIntent);
-						am.abandonAudioFocus(afChangeListener);
-					}
-				}
+                if (mp == null)
+                    return;
+                if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+                    if (mp.isPlaying())
+                        mp.stop();
+                    if (PlayerActivity.mNotificationManager != null) {
+                        PlayerActivity.mNotificationManager.cancelAll();
+                    }
+                    wasPlay = false;
+                    broadcastIntent.putExtra("STATE", 4);
+                    sendBroadcast(broadcastIntent);
+                    am.abandonAudioFocus(afChangeListener);
+                } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                    if (mp != null && !mp.isPlaying() && wasPlay)
+                        mp.start();
+                    wasPlay = false;
+                }
+                else {
+                    if (mp.isPlaying()) {
+                        mp.pause();
+                        wasPlay = true;
+                    }
+                }
 			}
 		};
 		telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);

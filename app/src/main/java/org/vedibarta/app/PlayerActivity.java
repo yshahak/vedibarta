@@ -1,7 +1,6 @@
 package org.vedibarta.app;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -13,7 +12,6 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
 import android.view.View;
 import android.widget.ImageButton;
@@ -28,16 +26,22 @@ import java.io.IOException;
 
 public class PlayerActivity extends Activity implements
 		SeekBar.OnSeekBarChangeListener, View.OnClickListener {
-	private TextView songCurrentDurationLabel;
+    private static final String EXTRA_PARASHA_NAME = "PARASHA";
+    private static final String EXTRA_POSITION = "POSITION";
+    private static final String EXTRA_FILE_IN_DEVICE = "FILE_EXIST";
+    private static final String EXTRA_PATH = "PATH";
+    private static final String EXTRA_STATE = "STATE";
+    private static final String EXTRA_TRACK = "TRACK";
+    private static final String EXTRA_CURRENT = "CURRENT";
+    private static final String EXTRA_COUNT = "COUNT";
+    private static final String EXTRA_LAUNCH = "launch";
+    private static final String EXTRA_INDEX = "INDEX";
+    private TextView songCurrentDurationLabel;
 	private TextView songTotalDurationLabel;
 	private TextView songTitleLabel;
 	private ImageButton play;
-	private ImageButton btnForward;
-	private ImageButton btnBackward;
-	private ImageButton next;
-	private ImageButton previous;
 
-	private ServiceConnection serviceConnection;
+    private ServiceConnection serviceConnection;
 	private BroadcastReceiver broadcastReceiver;
 	Intent connectionIntent;
 	int totalDuration;
@@ -52,7 +56,6 @@ public class PlayerActivity extends Activity implements
 	private boolean playing;
 	private boolean fileExist;
 	private boolean recreate;
-	boolean running;
 
 	private int position;
 	private String path = null;
@@ -68,14 +71,11 @@ public class PlayerActivity extends Activity implements
 		setContentView(R.layout.player1);
 		count = 1;
 		ctx = this;
-		recreate = false;
-		playing = false;
-		running = false;
 		myPref = getPreferences(0);
 		myData = new ParashotData();
 		utils = new Utilities();
 
-		connectionIntent = new Intent(this, PlayingService.class);
+		connectionIntent = new Intent(this, PlayingServiceNew.class);
 
 		path =  getIntent().getStringExtra("PATH");
 
@@ -108,8 +108,7 @@ public class PlayerActivity extends Activity implements
 				case 2:
 					totalDuration =  i.getIntExtra("TOTAL", 0);
 					currentDuration =  i.getLongExtra("CURRENT", 0);
-					songTotalDurationLabel.setText(""
-							+ utils.milliSecondsToTimer((long) totalDuration));
+					songTotalDurationLabel.setText(""+ utils.milliSecondsToTimer((long) totalDuration));
 					// Displaying time completed playing
 					songCurrentDurationLabel
 							.setText(""
@@ -150,10 +149,10 @@ public class PlayerActivity extends Activity implements
 		registerReceiver(broadcastReceiver, filter);
 
 		play = (ImageButton) findViewById(R.id.btnPlay);
-		next = (ImageButton) findViewById(R.id.btnNext);
-		btnForward = (ImageButton) findViewById(R.id.btnForward);
-		btnBackward = (ImageButton) findViewById(R.id.btnBackward);
-		previous = (ImageButton) findViewById(R.id.btnPrevious);
+        ImageButton next = (ImageButton) findViewById(R.id.btnNext);
+        ImageButton btnForward = (ImageButton) findViewById(R.id.btnForward);
+        ImageButton btnBackward = (ImageButton) findViewById(R.id.btnBackward);
+        ImageButton previous = (ImageButton) findViewById(R.id.btnPrevious);
 		songProgressBar = (SeekBar) findViewById(R.id.songProgressBar);
 		songProgressBar.setProgress(0);
 		songCurrentDurationLabel = (TextView) findViewById(R.id.songCurrentDurationLabel);
@@ -175,55 +174,55 @@ public class PlayerActivity extends Activity implements
 		super.onResume();
 		if (mNotificationManager != null)
 			mNotificationManager.cancel(1);
-		position = getIntent().getIntExtra("POSITION", 0);
-		trackTitle = getIntent().getStringExtra("PARASHA");
+		position = getIntent().getIntExtra(EXTRA_POSITION, 0);
+		trackTitle = getIntent().getStringExtra(EXTRA_PARASHA_NAME);
 		// for update the file about the last data of playing state
-		index = getIntent().getIntExtra("INDEX", 0);
+		index = getIntent().getIntExtra(EXTRA_INDEX, 0);
 		// we trying to play from last point for user
-		if (myPref.getInt("POSITION", 100) == position)
+		if (myPref.getInt(EXTRA_POSITION, 100) == position)
 			recreate = true;
-		fileExist = getIntent().getBooleanExtra("FILE_EXIST", false);
-		numberOfTracks = myData.tracksNumber(position);
+		fileExist = getIntent().getBooleanExtra(EXTRA_FILE_IN_DEVICE, false);
 
-		connectionIntent.putExtra("STATE", 1);
-		if (!playing && !running) {
-			path =  getIntent().getStringExtra("PATH");
+		numberOfTracks = myData.getTracksNumber(position);
+
+		connectionIntent.putExtra(EXTRA_STATE, 1);
+        if (playing ) {
+            if (getIntent().getBooleanExtra(EXTRA_LAUNCH, false)) {
+                path = getIntent().getStringExtra(EXTRA_PATH);
+                if (fileExist) {
+                    count = getIntent().getIntExtra(EXTRA_COUNT, 1);
+                    String myFile = myData.getPath(position, count - 1)[0];
+                    path = path + File.separator + myFile;
+                    connectionIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
+                } else {
+                    count = 1;
+                }
+                connectionIntent.putExtra(EXTRA_PATH, path);
+                connectionIntent.putExtra(EXTRA_STATE, 1);
+                startService(connectionIntent);
+                loadClip();
+            }
+        }
+		else {
+			path =  getIntent().getStringExtra(EXTRA_PATH);
 			if (recreate || fileExist) {
 				if (recreate) {
-					count = myPref.getInt("TRACK", 1);
+					count = myPref.getInt(EXTRA_TRACK, 1);
 					path = myData.getPath(position, count - 1)[1];
-					connectionIntent.putExtra("CURRENT",
-							myPref.getLong("CURRENT", 0));
+					connectionIntent.putExtra(EXTRA_CURRENT, myPref.getLong(EXTRA_CURRENT, 0));
 					recreate = false;
 				} else {
-					count =  getIntent().getIntExtra("COUNT", 1);
+					count =  getIntent().getIntExtra(EXTRA_COUNT, 1);
 					String myFile = myData.getPath(position, count - 1)[0];
 					path = path + File.separator + myFile;
-					connectionIntent.putExtra("CURRENT", getIntent()
-							.getLongExtra("CURRENT", 0));
+					connectionIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
 				}
 			}
-			connectionIntent.putExtra("PATH", path);
-			startService(connectionIntent);
+			connectionIntent.putExtra(EXTRA_PATH, path);
+            connectionIntent.putExtra(EXTRA_CURRENT, (long) 0);
+            startService(connectionIntent);
 			loadClip();
 		}
-		if (playing && getIntent().getBooleanExtra("launch", false)) {
-			path =  getIntent().getStringExtra("PATH");
-			if (fileExist) {
-				count =  getIntent().getIntExtra("COUNT", 1);
-				String myFile = myData.getPath(position, count - 1)[0];
-				path =  path + File.separator + myFile;
-				connectionIntent.putExtra("CURRENT",
-						getIntent().getLongExtra("CURRENT", 0));
-			} else {
-				count = 1;
-			}
-			connectionIntent.putExtra("PATH", path);
-			connectionIntent.putExtra("STATE", 1);
-			startService(connectionIntent);
-			loadClip();
-		}
-		connectionIntent.putExtra("CURRENT", (long) 0);
 		setIntent(getIntent().putExtra("launch", false));
 
 	}
@@ -275,7 +274,6 @@ public class PlayerActivity extends Activity implements
 			// mId allows you to update the notification later on.
 			mNotificationManager.notify(1, mBuilder.build());
 		}
-		running = true;
 	}
 
 	@Override
@@ -287,26 +285,10 @@ public class PlayerActivity extends Activity implements
 	}
 
 	private void loadClip() {
-		new Thread(new Runnable() {
-			public void run() {
-				Looper.prepare();
-				try {
-					// set Progress bar values
-					songProgressBar.setProgress(0);
-					songProgressBar.setMax(100);
-					runOnUiThread(new Runnable() {
-						public void run() {
-							songTitleLabel.setText((String) trackTitle + " "
-									+ count + "/" + numberOfTracks);
-						}
-					});
-
-				} catch (Throwable t) {
-					goBlooey(t);
-
-				}
-			}
-		}).start();
+        // set Progress bar values
+        songProgressBar.setProgress(0);
+        songProgressBar.setMax(100);
+        songTitleLabel.setText(trackTitle + " " + count + "/" + numberOfTracks);
 	}
 
 	@Override
@@ -336,8 +318,7 @@ public class PlayerActivity extends Activity implements
 	}
 
 	@Override
-	public void onProgressChanged(SeekBar seekBar, int progress,
-			boolean fromTouch) {
+	public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
 	}
 
 	/**
@@ -347,6 +328,7 @@ public class PlayerActivity extends Activity implements
 	public void onStartTrackingTouch(SeekBar seekBar) {
 		connectionIntent.putExtra("STATE", 4);
 		startService(connectionIntent);
+        progressIsDragging = true;
 	}
 
 	@Override
@@ -358,7 +340,7 @@ public class PlayerActivity extends Activity implements
 		startService(connectionIntent);
 		play.setImageResource(R.drawable.btn_pause);
 		playing = true;
-
+        progressIsDragging = false;
 	}
 
 	private void clickEvent(int add) {
@@ -366,7 +348,7 @@ public class PlayerActivity extends Activity implements
 		if (count < numberOfTracks && count >= 0) {
 			try {
 				if (fileExist)
-					path = (String) getIntent().getStringExtra("PATH") + "/"
+					path =  getIntent().getStringExtra("PATH") + "/"
 							+ myData.getPath(position, count)[0];
 				else {
 					path = myData.getPath(position, count)[1];
@@ -381,7 +363,6 @@ public class PlayerActivity extends Activity implements
 				play.setImageResource(R.drawable.btn_play);
 				count++;
 			} catch (Throwable t) {
-				goBlooey(t);
 			}
 		} else {
 			count = 1;
@@ -400,11 +381,6 @@ public class PlayerActivity extends Activity implements
 
 	}
 
-	private void goBlooey(Throwable t) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle("Exception!").setMessage(t.toString())
-				.setPositiveButton("OK", null).show();
-	}
 
 	@Override
 	public void onClick(View v) {
@@ -439,5 +415,37 @@ public class PlayerActivity extends Activity implements
 			break;
 		}
 	}
+
+    /**
+     * Update player data
+     * @param chapterChanged if <b>true</b>, update the new playing chapter, else update player time
+     */
+    public void updatePlayerInUIThread(boolean chapterChanged) {
+        runOnUiThread(updatePlayerTime);
+        if (chapterChanged) {
+            runOnUiThread(updatePlayerChapter);
+        }
+    }
+
+    Runnable updatePlayerChapter = new Runnable() {
+        @Override
+        public void run() {
+            songTitleLabel.setText(trackTitle + " "+ count + "/" + numberOfTracks);
+            songTotalDurationLabel.setText("" + utils.milliSecondsToTimer((long) totalDuration));
+        }
+    };
+
+    private boolean progressIsDragging;
+    Runnable updatePlayerTime = new Runnable() {
+        @Override
+        public void run() {
+            if (!progressIsDragging) {
+                songCurrentDurationLabel.setText("" + utils.milliSecondsToTimer( currentDuration));
+                // Updating progress bar
+                int progress = (utils.getProgressPercentage(currentDuration, (long) totalDuration));
+                songProgressBar.setProgress(progress);
+            }
+        }
+    };
 
 }

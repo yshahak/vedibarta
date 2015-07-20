@@ -164,10 +164,9 @@ public class List_View1 extends ListFragment {
 		}
 
 		@Override
-		public View getView(final int position, View convertView,
-				ViewGroup parent) {
+		public View getView(final int position, View convertView,ViewGroup parent) {
 
-			View row = convertView;
+			View row;
 			row = super.getView(position, convertView, parent);
 			row.setOnClickListener((new OnClickListener() {
 				@Override
@@ -198,7 +197,7 @@ public class List_View1 extends ListFragment {
 						item = data.getParashaHeb(position);
 						path = data.getPath(position, 0)[1];
 						Intent i = new Intent(ctx, PlayerActivity.class);
-						if (util.isMyServiceRunning(ctx) && (boolean)((Activity) ctx).getIntent().getBooleanExtra("playing", false)){ 
+						if (util.isMyServiceRunning(ctx) && ((Activity) ctx).getIntent().getBooleanExtra("playing", false)){
 							i.putExtra("launch", true);
 						}
 						i.putExtra("PATH", path);

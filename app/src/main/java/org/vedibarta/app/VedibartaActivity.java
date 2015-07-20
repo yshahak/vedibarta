@@ -48,6 +48,7 @@ public class VedibartaActivity extends ActionBarActivity {
 	NotificationManager mNotifyManager;
 	Builder mBuilder;
 
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
         Mint.initAndStartSession(this, "0ea8e3c0");
@@ -236,7 +237,7 @@ public class VedibartaActivity extends ActionBarActivity {
 							ctx);
 					util.writeToFile((String) resultData.getString("PATH")
 							+ ";" + "1" + ";" + "0", false, ctx);
-					VedibartaActivity.logList.add("mainActivity");
+					VedibartaActivity.logList.add("playerActivity");
 					VedibartaActivity.logList.add(parasha + " "
                             + " נוספה לקובץ טקסט");
 					parasha = null;

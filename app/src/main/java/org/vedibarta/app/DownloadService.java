@@ -56,7 +56,7 @@ public class DownloadService extends IntentService {
 			dir = new File(getExternalFilesDir(null) + File.separator + AudioFiles + File.separator
 					+ Integer.toString(position));
 		dir.mkdirs();
-		int numberOfTracks = (int) par.tracksNumber(position);
+		int numberOfTracks = (int) par.getTracksNumber(position);
         Bundle resultData = new Bundle();
 		resultData.putInt("tracks" ,(int) (numberOfTracks));
 		resultData.putInt("i" ,(int) (0));
