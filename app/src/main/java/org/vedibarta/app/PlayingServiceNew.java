@@ -16,7 +16,6 @@ import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.splunk.mint.Mint;
@@ -92,7 +91,7 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
             int command = intent.getIntExtra(COMMAND, -1);
             switch (command) {
                 case START_PLAY:
-                    makePlaying(intent.getStringExtra("PATH"));
+                    makePlaying(intent.getStringExtra(PlayerActivity.EXTRA_PATH));
                     break;
                 case PLAY_PRESSED:
                     if (mp.isPlaying())
@@ -103,20 +102,17 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
                 case CHAPTER_NEXT:
                     if (currentChapter < lastChapter) {
                         currentChapter++;
-                        makePlaying(intent.getStringExtra("PATH"));
+                        makePlaying(intent.getStringExtra(PlayerActivity.EXTRA_PATH));
                     } else
                         endPlay();
                     break;
                 case CHAPTER_PREVIOUS:
                     if (currentChapter > 1) {
                         currentChapter--;
-                        makePlaying(intent.getStringExtra("PATH"));
+                        makePlaying(intent.getStringExtra(PlayerActivity.EXTRA_PATH));
                     } else
                         seekTo(0, true);
                     break;
-                /*case RESTART_CHAPTER:
-                    seekTo(0, true);
-                    break;*/
                 case SEEK_TO:
                     int moveTo = intent.getIntExtra("MOVE_TO", 0);
                     boolean absValue = intent.getBooleanExtra("ABS_VALUE", false);
@@ -131,9 +127,8 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
                     break;
                 case ACTIVTY_RESUME:
                     if (mp.isPlaying()) {
-                        updateProgressBar();
-                    } /*else
-                        appContext.getPlayerActivity().updatePlayerInUIThread(true);*/
+                        updateSeekBar();
+                    }
                     break;
                 case ACTIVIY_DESTROY:
                     if (mp != null && !mp.isPlaying())
@@ -257,7 +252,7 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
     }
 
 
-    public void updateProgressBar() {
+    public void updateSeekBar() {
         mHandler.postDelayed(mUpdateTimeTask, 100);//little delay so mp.isPlaying() will update
     }
 
@@ -265,7 +260,10 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
         public void run() {
             if (mp.isPlaying()) {
                 currentDuration = mp.getCurrentPosition();
-                appContext.getPlayerActivity().updatePlayerInUIThread(false);
+                PlayerActivity activity = appContext.getPlayerActivity();
+                if (activity != null) {
+                    activity.updatePlayerInUIThread(false);
+                }
                 mHandler.postDelayed(this, 1000);
             } else {
                 mHandler.removeCallbacks(mUpdateTimeTask);
@@ -295,40 +293,30 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
 
     @Override
     public void onPrepared(MediaPlayer mp) {
-      /*  totalDuration = mp.getDuration();
-        if (MainActivity.fiveSecPlayingMode)
-            mp.seekTo(totalDuration - 8000);
+        totalDuration = mp.getDuration();
         mp.start();
         playing = true;
         updateNotification();
-        MainActivity activity = appContext.getPlayerActivity();
+        PlayerActivity activity = appContext.getPlayerActivity();
         if (activity != null) {
-            if (MyApplication.premiumUser)
-                activity.setHtmlPage();
-            if (MainActivity.foreground) {
-                updateProgressBar();
-                activity.updatePlayerInUIThread(true);
-            }
-        }*/
+            updateSeekBar();
+            activity.updatePlayerInUIThread(true);
+        }
     }
 
     public void onAudioFocusChange(int focusChange) {
         if (mp == null)
             return;
-        //int myfocusChange = focusChange;
         if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
-            Log.d("log", "AUDIOFOCUS_LOSS");
             am.abandonAudioFocus(this);
             wasPlay = false;
             endPlay();
         } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-            Log.d("log", "AUDIOFOCUS_GAIN");
             if (wasPlay)
                 resumePlay();
             wasPlay = false;
         }
         else {
-            Log.d("log", "AUDIOFOCUS_loss_TRANSIENT");
             if (mp.isPlaying()) {
                 wasPlay = true;
                 pausePlay();

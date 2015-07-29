@@ -3,11 +3,9 @@ package org.vedibarta.app;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -19,22 +17,14 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.splunk.mint.Mint;
-
-import java.io.IOException;
-
 public class PlayerActivity extends Activity implements
 		SeekBar.OnSeekBarChangeListener, View.OnClickListener {
-    private static final String EXTRA_PARASHA_NAME = "PARASHA";
-    private static final String EXTRA_POSITION = "POSITION";
     private static final String EXTRA_FILE_IN_DEVICE = "FILE_EXIST";
-    private static final String EXTRA_PATH = "PATH";
-    private static final String EXTRA_STATE = "STATE";
+    public static final String EXTRA_PATH = "PATH";
     private static final String EXTRA_TRACK = "TRACK";
     private static final String EXTRA_CURRENT = "CURRENT";
     private static final String EXTRA_COUNT = "COUNT";
     private static final String EXTRA_LAUNCH = "launch";
-    private static final String EXTRA_INDEX = "INDEX";
 	public  static final String EXTRA_PARASHA_DATA = "PARASHA_DATA";
     private TextView songCurrentDurationLabel;
 	private TextView songTotalDurationLabel;
@@ -42,43 +32,32 @@ public class PlayerActivity extends Activity implements
 	private ImageButton play;
 
     private ServiceConnection serviceConnection;
-	private BroadcastReceiver broadcastReceiver;
-	Intent connectionIntent;
-	int totalDuration;
-	long currentDuration;
+	Intent playingIntent;
 
 	int currentTrack;
 	private SeekBar songProgressBar;
 	private Utilities utils;
 	// Handler to update UI timer, progress bar etc,.
-	private ParashotData myData;
-	private boolean playing;
 	private boolean fileExist;
-	private boolean recreate;
 
-	private int position;
-	//private String path = null;
 	private SharedPreferences myPref;
-	private Context ctx;
-	private int index;
 	static NotificationManager mNotificationManager;
 	Parasha parasha;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		((MyApplication)getApplication()).setPlayerActivity(this);
 		setContentView(R.layout.player1);
 		currentTrack = 1;
-		ctx = this;
 		myPref = getPreferences(0);
-		myData = new ParashotData();
 		utils = new Utilities();
 
-		connectionIntent = new Intent(this, PlayingServiceNew.class);
+		playingIntent = new Intent(this, PlayingServiceNew.class);
 
 		parasha =  getIntent().getParcelableExtra(EXTRA_PARASHA_DATA);
 
-		// bind to our service by first creating a new connectionIntent
+		// bind to our service by first creating a new playingIntent
 		serviceConnection = new ServiceConnection() {
 			@Override
 			public void onServiceConnected(ComponentName arg0, IBinder binder) {
@@ -91,61 +70,7 @@ public class PlayerActivity extends Activity implements
 		};
 
 		// Supply the Intent & ServiceConnection that will use for the binding
-		bindService(connectionIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-
-		// Set up broadcast receiver for doing changes in UI
-		IntentFilter filter = new IntentFilter();
-		filter.addAction("UPDATE");
-		broadcastReceiver = new BroadcastReceiver() {
-			@Override
-			public synchronized void onReceive(Context context, Intent i) {
-				switch ( i.getIntExtra("STATE", 0)) {
-				case 1:
-					playing = true;
-					play.setImageResource(R.drawable.btn_pause);
-					break;
-				case 2:
-					totalDuration =  i.getIntExtra("TOTAL", 0);
-					currentDuration =  i.getLongExtra("CURRENT", 0);
-					songTotalDurationLabel.setText(""+ utils.milliSecondsToTimer((long) totalDuration));
-					// Displaying time completed playing
-					songCurrentDurationLabel
-							.setText(""
-									+ utils.milliSecondsToTimer( currentDuration));
-
-					// Updating progress bar
-					int progress = (utils.getProgressPercentage(
-							 currentDuration, (long) totalDuration));
-					songProgressBar.setProgress(progress);
-					break;
-				case 3:
-					clickEvent(0);
-					break;
-				case 4:
-					// this when audio focus had lost
-					connectionIntent.putExtra("STATE", 6);
-					startService(connectionIntent);
-					playing = false;
-					if (fileExist) {
-						String result = getIntent().getStringExtra("PATH")
-								+ ";" + currentTrack + ";" + currentDuration;
-						try {
-							utils.updateLine(ctx, index, true, result);
-						} catch (IOException e) {
-                            Mint.logException(e);
-						}
-					}
-					Intent backIntent = new Intent(ctx, VedibartaActivity.class);
-					backIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-					backIntent.putExtra("playing", false);
-					startActivity(backIntent);
-					currentTrack = 1;
-					finish();
-					break;
-				}
-			}
-		};
-		registerReceiver(broadcastReceiver, filter);
+		bindService(playingIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
 		play = (ImageButton) findViewById(R.id.btnPlay);
         ImageButton next = (ImageButton) findViewById(R.id.btnNext);
@@ -175,39 +100,31 @@ public class PlayerActivity extends Activity implements
 			mNotificationManager.cancel(1);
 		// for update the file about the last data of playing state
 		// we trying to play from last point for user
-		if (myPref.getInt(EXTRA_POSITION, 100) == position)
-			recreate = true;
 		fileExist = getIntent().getBooleanExtra(EXTRA_FILE_IN_DEVICE, false);
 
 
-		connectionIntent.putExtra(EXTRA_STATE, 1);
-        if (playing ) {
+		playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.START_PLAY);
+        if (PlayingServiceNew.playing ) {
             if (getIntent().getBooleanExtra(EXTRA_LAUNCH, false)) {
                 if (fileExist) {
                     currentTrack = getIntent().getIntExtra(EXTRA_COUNT, 1);
-                    connectionIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
+                    playingIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
                 } else {
                     currentTrack = 1;
                 }
-                connectionIntent.putExtra(EXTRA_PATH, parasha.paths.get(currentTrack - 1));
-                connectionIntent.putExtra(EXTRA_STATE, 1);
-                startService(connectionIntent);
+                playingIntent.putExtra(EXTRA_PATH, parasha.paths.get(currentTrack - 1));
+                startService(playingIntent);
                 loadClip();
             }
         }
 		else {
-			if (recreate || fileExist) {
+			if (fileExist) {
 				currentTrack = myPref.getInt(EXTRA_TRACK, 1);
-				if (recreate) {
-					connectionIntent.putExtra(EXTRA_CURRENT, myPref.getLong(EXTRA_CURRENT, 0));
-					recreate = false;
-				} else {
-					connectionIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
-				}
+                playingIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
 			}
-			connectionIntent.putExtra(EXTRA_PATH, parasha.paths.get(currentTrack - 1));
-            connectionIntent.putExtra(EXTRA_CURRENT, (long) 0);
-            startService(connectionIntent);
+			playingIntent.putExtra(EXTRA_PATH, parasha.paths.get(currentTrack - 1));
+            playingIntent.putExtra(EXTRA_CURRENT, (long) 0);
+            startService(playingIntent);
 			loadClip();
 		}
 		setIntent(getIntent().putExtra("launch", false));
@@ -224,25 +141,24 @@ public class PlayerActivity extends Activity implements
 		super.onStop();
 		if (fileExist) {
 			String result = getIntent().getStringExtra("PATH") + ";" + currentTrack
-					+ ";" + currentDuration;
-			try {
+					+ ";" + PlayingServiceNew.currentDuration;
+			/*try {
 				utils.updateLine(ctx, index, true, result);
 			} catch (IOException e) {
                 Mint.logException(e);
-			}
+			}*/
 		} else {
 			SharedPreferences.Editor editor = myPref.edit();
-			editor.putLong("CURRENT", currentDuration);
+			editor.putLong("CURRENT", PlayingServiceNew.currentDuration);
 			editor.putInt("TRACK", currentTrack);
-			editor.putInt("POSITION", position);
 			// Commit the edits!
 			editor.commit();
 		}
 
 		// add notification if playing
-		if (playing) {
+		if (PlayingServiceNew.playing) {
 			NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
-					ctx)
+					this)
 					.setSmallIcon(R.drawable.ic_menu_play_clip)
 					.setContentTitle(
 							getResources().getString(R.string.app_name))
@@ -266,9 +182,9 @@ public class PlayerActivity extends Activity implements
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
+		((MyApplication)getApplication()).setPlayerActivity(null);
 		// whenever our activity gets destroyed, unbind from the service
 		unbindService(this.serviceConnection);
-		unregisterReceiver(broadcastReceiver);
 	}
 
 	private void loadClip() {
@@ -281,25 +197,25 @@ public class PlayerActivity extends Activity implements
 	public void onBackPressed() {
 		// super.onBackPressed();
 
-		if (!playing) {
+		if (!PlayingServiceNew.playing) {
 			if (fileExist) {
 				String result = getIntent().getStringExtra("PATH") + ";"
-						+ currentTrack + ";" + currentDuration;
-				try {
+						+ currentTrack + ";" + PlayingServiceNew.currentDuration;
+				/*try {
 					utils.updateLine(ctx, index, true, result);
 				} catch (IOException e) {
                     Mint.logException(e);
-				}
+				}*/
 			} else {
-				connectionIntent.putExtra("STATE", 2);
-				startService(connectionIntent);
+				playingIntent.putExtra(PlayingServiceNew.COMMAND, 2);
+				startService(playingIntent);
 			}
 			finish();
 		}
 
 		Intent backIntent = new Intent(this, VedibartaActivity.class);
 		backIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-		backIntent.putExtra("playing", playing);
+		backIntent.putExtra("playing", PlayingServiceNew.playing);
 		startActivity(backIntent);
 	}
 
@@ -312,20 +228,19 @@ public class PlayerActivity extends Activity implements
 	 * */
 	@Override
 	public void onStartTrackingTouch(SeekBar seekBar) {
-		connectionIntent.putExtra("STATE", 4);
-		startService(connectionIntent);
+		playingIntent.putExtra(PlayingServiceNew.COMMAND, 4);
+		startService(playingIntent);
         progressIsDragging = true;
 	}
 
 	@Override
 	public void onStopTrackingTouch(SeekBar seekBar) {
-		connectionIntent.putExtra("STATE", 5);
-		int currentPosition = (int) utils.progressToTimer(
-				(int) seekBar.getProgress(), (int) totalDuration);
-		connectionIntent.putExtra("SEEK", currentPosition);
-		startService(connectionIntent);
+		playingIntent.putExtra(PlayingServiceNew.COMMAND, 5);
+		int currentPosition = utils.progressToTimer(
+				 seekBar.getProgress(),  PlayingServiceNew.totalDuration);
+		playingIntent.putExtra("SEEK", currentPosition);
+		startService(playingIntent);
 		play.setImageResource(R.drawable.btn_pause);
-		playing = true;
         progressIsDragging = false;
 	}
 
@@ -335,9 +250,9 @@ public class PlayerActivity extends Activity implements
 			try {
 				if (!fileExist)
 					Toast.makeText(this,getResources().getString(R.string.begin_playing),	Toast.LENGTH_SHORT).show();
-				connectionIntent.putExtra("PATH", parasha.paths.get(currentTrack));
-				connectionIntent.putExtra("STATE", 1);
-				startService(connectionIntent);
+				playingIntent.putExtra("PATH", parasha.paths.get(currentTrack));
+				playingIntent.putExtra(PlayingServiceNew.COMMAND, 1);
+				startService(playingIntent);
 				loadClip();
 				play.setImageResource(R.drawable.btn_play);
 				currentTrack++;
@@ -345,8 +260,8 @@ public class PlayerActivity extends Activity implements
 			}
 		} else {
 			currentTrack = 1;
-			connectionIntent.putExtra("STATE", 6);
-			startService(connectionIntent);
+			playingIntent.putExtra(PlayingServiceNew.COMMAND, 6);
+			startService(playingIntent);
 			runOnUiThread(new Runnable() {
 				public void run() {
 					Toast.makeText(PlayerActivity.this,
@@ -354,7 +269,6 @@ public class PlayerActivity extends Activity implements
 							Toast.LENGTH_SHORT).show();
 				}
 			});
-			playing = false;
 			finish();
 		}
 
@@ -363,36 +277,34 @@ public class PlayerActivity extends Activity implements
 
 	@Override
 	public void onClick(View v) {
-		switch ((int) v.getId()) {
-		case R.id.btnPlay:
-			// check for already playing
-			if (playing) {
-				connectionIntent.putExtra("STATE", 2);
-				startService(connectionIntent);
-				play.setImageResource(R.drawable.btn_play);
-				playing = false;
-			} else {
-				connectionIntent.putExtra("STATE", 3);
-				startService(connectionIntent);
-				play.setImageResource(R.drawable.btn_pause);
-				playing = true;
-			}
-			break;
-		case R.id.btnNext:
-			clickEvent(0);
-			break;
-		case R.id.btnPrevious:
-			clickEvent(-2);
-			break;
-		case R.id.btnForward:
-			connectionIntent.putExtra("STATE", 8);
-			startService(connectionIntent);
-			break;
-		case R.id.btnBackward:
-			connectionIntent.putExtra("STATE", 7);
-			startService(connectionIntent);
-			break;
-		}
+		switch ( v.getId()) {
+            case R.id.btnPlay:
+                if (PlayingServiceNew.playing)
+                    play.setImageResource(R.drawable.btn_play);
+                else
+                    play.setImageResource(R.drawable.btn_pause);
+                playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.PLAY_PRESSED);
+                startService(playingIntent);
+                break;
+            case R.id.btnNext:
+                clickEvent(0);
+                break;
+            case R.id.btnPrevious:
+                clickEvent(-2);
+                break;
+            case R.id.btnForward:
+                playingIntent.putExtra("MOVE_TO", 10000);
+                playingIntent.putExtra("ABS_VALUE", false);
+                playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.SEEK_TO);
+                startService(playingIntent);
+                break;
+            case R.id.btnBackward:
+                playingIntent.putExtra("MOVE_TO", -10000);
+                playingIntent.putExtra("ABS_VALUE", false);
+                playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.SEEK_TO);
+                startService(playingIntent);
+                break;
+            }
 	}
 
     /**
@@ -409,8 +321,9 @@ public class PlayerActivity extends Activity implements
     Runnable updatePlayerChapter = new Runnable() {
         @Override
         public void run() {
+            play.setImageResource(R.drawable.btn_pause);
             songTitleLabel.setText(parasha.label + " "+ currentTrack + "/" + parasha.totalTracks);
-            songTotalDurationLabel.setText("" + utils.milliSecondsToTimer((long) totalDuration));
+            songTotalDurationLabel.setText("" + utils.milliSecondsToTimer((long) PlayingServiceNew.totalDuration));
         }
     };
 
@@ -419,9 +332,9 @@ public class PlayerActivity extends Activity implements
         @Override
         public void run() {
             if (!progressIsDragging) {
-                songCurrentDurationLabel.setText("" + utils.milliSecondsToTimer( currentDuration));
+                songCurrentDurationLabel.setText("" + utils.milliSecondsToTimer( PlayingServiceNew.currentDuration));
                 // Updating progress bar
-                int progress = (utils.getProgressPercentage(currentDuration, (long) totalDuration));
+                int progress = (utils.getProgressPercentage(PlayingServiceNew.currentDuration, (long) PlayingServiceNew.totalDuration));
                 songProgressBar.setProgress(progress);
             }
         }
