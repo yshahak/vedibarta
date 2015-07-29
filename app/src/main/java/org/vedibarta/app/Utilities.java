@@ -25,8 +25,8 @@ import java.util.Stack;
 
 public class Utilities {
 
-	final String FILE_NUMBERS = "numbers.txt";
-	final String FILE_PATHES = "pathes.txt";
+	static final String FILE_NUMBERS = "numbers.txt";
+	static final String FILE_PATHES = "pathes.txt";
 
 	// Return the size of a directory in bytes
 	public long dirSize(File dir) {
@@ -113,7 +113,7 @@ public class Utilities {
 		return currentDuration * 1000;
 	}
 
-	public boolean isNetworkAvailable(Context ctx) {
+	public static boolean isNetworkAvailable(Context ctx) {
 		ConnectivityManager connectivityManager = (ConnectivityManager) ctx
 				.getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo activeNetworkInfo = connectivityManager
@@ -153,7 +153,7 @@ public class Utilities {
 		}
 	}
 
-	public ArrayList<String> readFromFile(Context ctx, boolean numbers) {
+	public static  ArrayList<String> readFromFile(Context ctx, boolean numbers) {
 		ArrayList<String> ret = new ArrayList<String>();
 		File TEXTFILES = new File(ctx.getFilesDir(), "TEXTFILES");
 		File file;
@@ -228,7 +228,7 @@ public class Utilities {
 	}
 	
 	//Check if service is running
-	public boolean isMyServiceRunning(Context ctx) {
+	public static boolean isMyServiceRunning(Context ctx) {
 	    ActivityManager manager = (ActivityManager) ctx.getSystemService(Context.ACTIVITY_SERVICE);
 	    for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
 	        if (PlayingService.class.getName().equals(service.service.getClassName())) {

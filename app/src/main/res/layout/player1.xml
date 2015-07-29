@@ -133,6 +133,7 @@
         android:layout_marginRight="20dp"
         android:paddingLeft="6dp"
         android:paddingRight="6dp"
+        android:max="100"
         android:progressDrawable="@drawable/seekbar_progress"
         android:thumb="@drawable/seek_handler" />
 

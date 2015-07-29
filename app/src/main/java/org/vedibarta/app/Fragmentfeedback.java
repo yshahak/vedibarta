@@ -5,13 +5,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -31,14 +29,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Feedback2 extends Fragment {
+public class Fragmentfeedback extends Fragment {
 	Utilities util;
 	Context ctx;
-	WebView webview;
 	HttpClient client;
 	HttpPost post;
-	Handler hand;
-	int count = 1;
 	EditText EditTextName;
 	EditText EditTextEmail;
 	EditText EditTextFeedbackBody;
@@ -49,7 +44,7 @@ public class Feedback2 extends Fragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		View mainView = (View) inflater.inflate(R.layout.feedback2, container,
+		View mainView =  inflater.inflate(R.layout.feedback2, container,
 				false);
 		EditTextName = (EditText) mainView.findViewById(R.id.EditTextName);
 		EditTextEmail = (EditText) mainView.findViewById(R.id.EditTextEmail);
@@ -76,7 +71,7 @@ public class Feedback2 extends Fragment {
 				startActivity(intent);
 			}
 		});
-		ctx = (VedibartaActivity) getActivity();
+		ctx =  getActivity();
 		util = new Utilities();
 
 		return mainView;

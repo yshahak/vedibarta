@@ -1,0 +1,30 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="5dp"
+    android:orientation="horizontal"
+    tools:context=".VedibartaActivity"  >
+
+    <ImageButton
+        android:id="@+id/btn_download"
+        android:layout_width="80dp"
+        android:layout_height="50dp"
+        android:src="@drawable/stat_sys_download_anim1" />
+
+    <ImageButton
+        android:id="@+id/btn_play"
+        android:layout_width="80dp"
+        android:layout_height="50dp"
+        android:src="@drawable/ic_media_play" />
+
+    <TextView
+        android:id="@+id/label"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_vertical"
+        android:gravity="center_vertical"
+        android:layout_weight="1"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+</LinearLayout>

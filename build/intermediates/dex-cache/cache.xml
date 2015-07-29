@@ -2,6 +2,13 @@
 <items version="2" >
 
     <item
+        jar="F:\Users\yshahak\AppData\Local\Android\sdk\extras\android\m2repository\com\android\support\support-v4\19.0.0\support-v4-19.0.0.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="afee690af14bd2c32d400cdf78e746fd45c386fa">
+        <dex dex="F:\Users\yshahak\AndroidStudioProjects\vedibarta\app\build\intermediates\pre-dexed\debug\support-v4-19.0.0-0bb0b54e51f7cd15d757a35399aeaea06133757d.jar" />
+    </item>
+    <item
         jar="F:\Users\yshahak\AndroidStudioProjects\vedibarta\app\libs\mint-4.0.9.jar"
         jumboMode="false"
         revision="21.1.2"
@@ -28,13 +35,6 @@
         revision="21.1.2"
         sha1="eb69b5c2e53e59d82f7439f3217f46f9d98f0c89">
         <dex dex="F:\Users\yshahak\AndroidStudioProjects\vedibarta\app\build\intermediates\pre-dexed\debug\classes-155dc7e8aad97640e091d65bb8cea87dbc7b022b.jar" />
-    </item>
-    <item
-        jar="F:\Program Files (x86)\Android\sdk\extras\android\m2repository\com\android\support\support-v4\19.0.0\support-v4-19.0.0.jar"
-        jumboMode="false"
-        revision="21.1.2"
-        sha1="afee690af14bd2c32d400cdf78e746fd45c386fa">
-        <dex dex="F:\Users\yshahak\AndroidStudioProjects\vedibarta\app\build\intermediates\pre-dexed\debug\support-v4-19.0.0-c5858c2aafe5e5f5e3fd5911e72e53f46b376478.jar" />
     </item>
     <item
         jar="F:\Users\yshahak\AndroidStudioProjects\vedibarta\app\libs\mail.jar"

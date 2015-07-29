@@ -26,7 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class List_View2 extends ListFragment {
+public class FragmentHoradot extends ListFragment {
 
 	private AlertDialog mdialog;
 	int pstn;

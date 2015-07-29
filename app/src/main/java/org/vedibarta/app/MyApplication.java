@@ -32,7 +32,7 @@ public class MyApplication extends Application {
     public void onCreate(){
         super.onCreate();
         String data = PreferenceManager.getDefaultSharedPreferences(this).getString(EXTRA_SAVED_DATA, "null");
-        if (data == null){
+        if ("null".equals(data)){
             new Thread(setData).start();
         }else {
 

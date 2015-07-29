@@ -70,22 +70,22 @@ public class VedibartaActivity extends ActionBarActivity {
 				.newTab()
 				.setText(R.string.parashot)
 				.setTabListener(
-						new MyTabListener<List_View1>(this, "parashot",
-								List_View1.class));
+						new MyTabListener<FragmentParashot>(this, "parashot",
+								FragmentParashot.class));
 		actionBar.addTab(tab1);
 		Tab tab2 = actionBar
 				.newTab()
 				.setText(R.string.downloads)
 				.setTabListener(
-						new MyTabListener<List_View2>(this, "horadot",
-								List_View2.class));
+						new MyTabListener<FragmentHoradot>(this, "horadot",
+								FragmentHoradot.class));
 		actionBar.addTab(tab2);
 		Tab tab3 = actionBar
 				.newTab()
 				.setText(R.string.feedback)
 				.setTabListener(
-						new MyTabListener<Feedback2>(this, "feedback",
-								Feedback2.class));
+						new MyTabListener<Fragmentfeedback>(this, "feedback",
+								Fragmentfeedback.class));
 		actionBar.addTab(tab3);
 
 	}

@@ -21,7 +21,6 @@ import android.widget.Toast;
 
 import com.splunk.mint.Mint;
 
-import java.io.File;
 import java.io.IOException;
 
 public class PlayerActivity extends Activity implements
@@ -36,6 +35,7 @@ public class PlayerActivity extends Activity implements
     private static final String EXTRA_COUNT = "COUNT";
     private static final String EXTRA_LAUNCH = "launch";
     private static final String EXTRA_INDEX = "INDEX";
+	public  static final String EXTRA_PARASHA_DATA = "PARASHA_DATA";
     private TextView songCurrentDurationLabel;
 	private TextView songTotalDurationLabel;
 	private TextView songTitleLabel;
@@ -47,8 +47,7 @@ public class PlayerActivity extends Activity implements
 	int totalDuration;
 	long currentDuration;
 
-	int count;
-	int numberOfTracks;
+	int currentTrack;
 	private SeekBar songProgressBar;
 	private Utilities utils;
 	// Handler to update UI timer, progress bar etc,.
@@ -58,18 +57,18 @@ public class PlayerActivity extends Activity implements
 	private boolean recreate;
 
 	private int position;
-	private String path = null;
-	private String trackTitle = null;
+	//private String path = null;
 	private SharedPreferences myPref;
 	private Context ctx;
 	private int index;
 	static NotificationManager mNotificationManager;
+	Parasha parasha;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.player1);
-		count = 1;
+		currentTrack = 1;
 		ctx = this;
 		myPref = getPreferences(0);
 		myData = new ParashotData();
@@ -77,7 +76,7 @@ public class PlayerActivity extends Activity implements
 
 		connectionIntent = new Intent(this, PlayingServiceNew.class);
 
-		path =  getIntent().getStringExtra("PATH");
+		parasha =  getIntent().getParcelableExtra(EXTRA_PARASHA_DATA);
 
 		// bind to our service by first creating a new connectionIntent
 		serviceConnection = new ServiceConnection() {
@@ -129,7 +128,7 @@ public class PlayerActivity extends Activity implements
 					playing = false;
 					if (fileExist) {
 						String result = getIntent().getStringExtra("PATH")
-								+ ";" + count + ";" + currentDuration;
+								+ ";" + currentTrack + ";" + currentDuration;
 						try {
 							utils.updateLine(ctx, index, true, result);
 						} catch (IOException e) {
@@ -140,7 +139,7 @@ public class PlayerActivity extends Activity implements
 					backIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
 					backIntent.putExtra("playing", false);
 					startActivity(backIntent);
-					count = 1;
+					currentTrack = 1;
 					finish();
 					break;
 				}
@@ -174,51 +173,39 @@ public class PlayerActivity extends Activity implements
 		super.onResume();
 		if (mNotificationManager != null)
 			mNotificationManager.cancel(1);
-		position = getIntent().getIntExtra(EXTRA_POSITION, 0);
-		trackTitle = getIntent().getStringExtra(EXTRA_PARASHA_NAME);
 		// for update the file about the last data of playing state
-		index = getIntent().getIntExtra(EXTRA_INDEX, 0);
 		// we trying to play from last point for user
 		if (myPref.getInt(EXTRA_POSITION, 100) == position)
 			recreate = true;
 		fileExist = getIntent().getBooleanExtra(EXTRA_FILE_IN_DEVICE, false);
 
-		numberOfTracks = myData.getTracksNumber(position);
 
 		connectionIntent.putExtra(EXTRA_STATE, 1);
         if (playing ) {
             if (getIntent().getBooleanExtra(EXTRA_LAUNCH, false)) {
-                path = getIntent().getStringExtra(EXTRA_PATH);
                 if (fileExist) {
-                    count = getIntent().getIntExtra(EXTRA_COUNT, 1);
-                    String myFile = myData.getPath(position, count - 1)[0];
-                    path = path + File.separator + myFile;
+                    currentTrack = getIntent().getIntExtra(EXTRA_COUNT, 1);
                     connectionIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
                 } else {
-                    count = 1;
+                    currentTrack = 1;
                 }
-                connectionIntent.putExtra(EXTRA_PATH, path);
+                connectionIntent.putExtra(EXTRA_PATH, parasha.paths.get(currentTrack - 1));
                 connectionIntent.putExtra(EXTRA_STATE, 1);
                 startService(connectionIntent);
                 loadClip();
             }
         }
 		else {
-			path =  getIntent().getStringExtra(EXTRA_PATH);
 			if (recreate || fileExist) {
+				currentTrack = myPref.getInt(EXTRA_TRACK, 1);
 				if (recreate) {
-					count = myPref.getInt(EXTRA_TRACK, 1);
-					path = myData.getPath(position, count - 1)[1];
 					connectionIntent.putExtra(EXTRA_CURRENT, myPref.getLong(EXTRA_CURRENT, 0));
 					recreate = false;
 				} else {
-					count =  getIntent().getIntExtra(EXTRA_COUNT, 1);
-					String myFile = myData.getPath(position, count - 1)[0];
-					path = path + File.separator + myFile;
 					connectionIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
 				}
 			}
-			connectionIntent.putExtra(EXTRA_PATH, path);
+			connectionIntent.putExtra(EXTRA_PATH, parasha.paths.get(currentTrack - 1));
             connectionIntent.putExtra(EXTRA_CURRENT, (long) 0);
             startService(connectionIntent);
 			loadClip();
@@ -236,7 +223,7 @@ public class PlayerActivity extends Activity implements
 	public void onStop() {
 		super.onStop();
 		if (fileExist) {
-			String result = getIntent().getStringExtra("PATH") + ";" + count
+			String result = getIntent().getStringExtra("PATH") + ";" + currentTrack
 					+ ";" + currentDuration;
 			try {
 				utils.updateLine(ctx, index, true, result);
@@ -246,7 +233,7 @@ public class PlayerActivity extends Activity implements
 		} else {
 			SharedPreferences.Editor editor = myPref.edit();
 			editor.putLong("CURRENT", currentDuration);
-			editor.putInt("TRACK", count);
+			editor.putInt("TRACK", currentTrack);
 			editor.putInt("POSITION", position);
 			// Commit the edits!
 			editor.commit();
@@ -261,7 +248,7 @@ public class PlayerActivity extends Activity implements
 							getResources().getString(R.string.app_name))
 					.setContentText(
 							getResources().getString(R.string.playing_parashat)
-									+ " " + trackTitle).setAutoCancel(true);
+									+ " " + parasha.label).setAutoCancel(true);
 			Intent resultIntent = new Intent(getApplicationContext(),
 					PlayerActivity.class);
 			resultIntent.setAction(Intent.ACTION_MAIN);
@@ -287,8 +274,7 @@ public class PlayerActivity extends Activity implements
 	private void loadClip() {
         // set Progress bar values
         songProgressBar.setProgress(0);
-        songProgressBar.setMax(100);
-        songTitleLabel.setText(trackTitle + " " + count + "/" + numberOfTracks);
+        songTitleLabel.setText(parasha.label + " " + currentTrack + "/" + parasha.totalTracks);
 	}
 
 	@Override
@@ -298,7 +284,7 @@ public class PlayerActivity extends Activity implements
 		if (!playing) {
 			if (fileExist) {
 				String result = getIntent().getStringExtra("PATH") + ";"
-						+ count + ";" + currentDuration;
+						+ currentTrack + ";" + currentDuration;
 				try {
 					utils.updateLine(ctx, index, true, result);
 				} catch (IOException e) {
@@ -344,28 +330,21 @@ public class PlayerActivity extends Activity implements
 	}
 
 	private void clickEvent(int add) {
-		count = count + add;
-		if (count < numberOfTracks && count >= 0) {
+		currentTrack = currentTrack + add;
+		if (currentTrack < parasha.totalTracks && currentTrack >= 0) {
 			try {
-				if (fileExist)
-					path =  getIntent().getStringExtra("PATH") + "/"
-							+ myData.getPath(position, count)[0];
-				else {
-					path = myData.getPath(position, count)[1];
-					Toast.makeText(PlayerActivity.this,
-							getResources().getString(R.string.begin_playing),
-							Toast.LENGTH_SHORT).show();
-				}
-				connectionIntent.putExtra("PATH", path);
+				if (!fileExist)
+					Toast.makeText(this,getResources().getString(R.string.begin_playing),	Toast.LENGTH_SHORT).show();
+				connectionIntent.putExtra("PATH", parasha.paths.get(currentTrack));
 				connectionIntent.putExtra("STATE", 1);
 				startService(connectionIntent);
 				loadClip();
 				play.setImageResource(R.drawable.btn_play);
-				count++;
+				currentTrack++;
 			} catch (Throwable t) {
 			}
 		} else {
-			count = 1;
+			currentTrack = 1;
 			connectionIntent.putExtra("STATE", 6);
 			startService(connectionIntent);
 			runOnUiThread(new Runnable() {
@@ -430,7 +409,7 @@ public class PlayerActivity extends Activity implements
     Runnable updatePlayerChapter = new Runnable() {
         @Override
         public void run() {
-            songTitleLabel.setText(trackTitle + " "+ count + "/" + numberOfTracks);
+            songTitleLabel.setText(parasha.label + " "+ currentTrack + "/" + parasha.totalTracks);
             songTotalDurationLabel.setText("" + utils.milliSecondsToTimer((long) totalDuration));
         }
     };
