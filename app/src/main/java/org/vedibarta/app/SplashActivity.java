@@ -1,7 +1,5 @@
 package org.vedibarta.app;
 
-import java.io.File;
-
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -12,6 +10,8 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import java.io.File;
 
 public class SplashActivity extends Activity {
 	Context ctx;
@@ -39,6 +39,7 @@ public class SplashActivity extends Activity {
 
 			}
 		});
+
 		settings.setJavaScriptEnabled(true);
 		// settings.setBuiltInZoomControls(false);
 		settings.setUseWideViewPort(true);

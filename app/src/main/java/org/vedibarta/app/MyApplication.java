@@ -26,6 +26,8 @@ public class MyApplication extends Application {
     ArrayList<Parasha> parahsot;
 
 
+    private int currentParashaPosition;
+
 
 
     @Override
@@ -38,6 +40,14 @@ public class MyApplication extends Application {
 
         }
         //Mint.initAndStartSession(this, MINT_TAG);
+    }
+
+    public void setCurrentParashaPosition(int currentParashaPosition) {
+        this.currentParashaPosition = currentParashaPosition;
+    }
+
+    public int getCurrentParashaPosition() {
+        return currentParashaPosition;
     }
 
     public void setDownloadService(DownloadService service){

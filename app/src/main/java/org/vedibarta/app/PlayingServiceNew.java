@@ -22,38 +22,33 @@ import com.splunk.mint.Mint;
 
 public class PlayingServiceNew extends Service implements MediaPlayer.OnPreparedListener, OnCompletionListener, OnAudioFocusChangeListener {
     Context ctx;
-    MyApplication appContext;
-    public final static int START_PLAY = 0, PLAY_PRESSED = 1, CHAPTER_PREVIOUS = 2, CHAPTER_NEXT = 3,
-            SEEK_TO = 5, ACTIVITY_STOP = 8, ACTIVTY_RESUME = 9, ACTIVIY_DESTROY = 10, END_PLAY = 11, NOTIFICATION_STOP = 12;
-    public static int currentDuration, totalDuration, currentChapter, lastChapter;
+    MyApplication myApplication;
+    public final static int START_PLAY = 0, PLAY_PRESSED = 1, SEEK_TO = 5, ACTIVITY_STOP = 8
+            , ACTIVTY_RESUME = 9, ACTIVIY_DESTROY = 10, END_PLAY = 11, NOTIFICATION_STOP = 12;
+    public static int currentDuration, totalDuration;
 
     public final static String COMMAND = "command";
     public final static String LAST_PLAY_TRACK = "last_play_chapter";
-    //boolean oneChapterPlaying;
-    static boolean foreground;
     public static boolean playing;
     private boolean wasPlay;
     public MediaPlayer mp;
     public Handler mHandler;
-    //protected int myfocusChange = 0;
     private RemoteViews contentView;
     public NotificationManager manager;
     TelephonyManager telephonyManager;
     PhoneStateListener listener;
     AudioManager am;
     SharedPreferences pref;
-    public String chapters[];
     private Notification notification;
-
 
     @Override
     public void onCreate() {
         ctx = this;
-        appContext = (MyApplication) getApplication();
-        appContext.setPlayingService(this);
+        myApplication = (MyApplication) getApplication();
+        myApplication.setPlayingService(this);
         mHandler = new Handler();
         manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        pref = PreferenceManager.getDefaultSharedPreferences(appContext);
+        pref = PreferenceManager.getDefaultSharedPreferences(myApplication);
         am = (AudioManager) getApplication().getSystemService(Context.AUDIO_SERVICE);
 
 
@@ -91,27 +86,15 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
             int command = intent.getIntExtra(COMMAND, -1);
             switch (command) {
                 case START_PLAY:
-                    makePlaying(intent.getStringExtra(PlayerActivity.EXTRA_PATH));
+                    makePlaying(myApplication.parahsot.get(PlayerActivity.currentParashPosition).paths.get(PlayerActivity.currentTrack));
                     break;
                 case PLAY_PRESSED:
                     if (mp.isPlaying())
                         pausePlay();
-                    else
+                    else {
                         resumePlay();
-                    break;
-                case CHAPTER_NEXT:
-                    if (currentChapter < lastChapter) {
-                        currentChapter++;
-                        makePlaying(intent.getStringExtra(PlayerActivity.EXTRA_PATH));
-                    } else
-                        endPlay();
-                    break;
-                case CHAPTER_PREVIOUS:
-                    if (currentChapter > 1) {
-                        currentChapter--;
-                        makePlaying(intent.getStringExtra(PlayerActivity.EXTRA_PATH));
-                    } else
-                        seekTo(0, true);
+                        updateCurrentTime();
+                    }
                     break;
                 case SEEK_TO:
                     int moveTo = intent.getIntExtra("MOVE_TO", 0);
@@ -127,7 +110,7 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
                     break;
                 case ACTIVTY_RESUME:
                     if (mp.isPlaying()) {
-                        updateSeekBar();
+                        updateCurrentTime();
                     }
                     break;
                 case ACTIVIY_DESTROY:
@@ -149,7 +132,7 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
             mp = null;
         }
         try {
-            appContext.setPlayingService(null);
+            myApplication.setPlayingService(null);
             mHandler.removeCallbacksAndMessages(null);
         } catch (NullPointerException e) {
             //Mint.logException(e);
@@ -171,15 +154,9 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
             mp.stop();
         }
         stopForeground(true);
-
         mHandler.removeCallbacks(mUpdateTimeTask);
         playing = false;
-        if (currentChapter > 1 && currentChapter < lastChapter)
-            pref.edit().putInt(LAST_PLAY_TRACK, currentChapter).apply();
-        else
-            pref.edit().putInt(LAST_PLAY_TRACK, -1).apply();
-        currentChapter = 0;
-        playing = false;
+        saveCurrentPlayingData();
         manager.cancelAll();
         mHandler.postDelayed(checkServiceInactiveInterval, 1000 * 60 * 10);
     }
@@ -187,7 +164,7 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
     public void makePlaying(String path) {
         try {
             mHandler.removeCallbacks(mUpdateTimeTask);
-            if (currentChapter <= lastChapter) {
+            if (PlayerActivity.currentTrack <= PlayerActivity.numberOfTracks) {
                 int result = am
                         .requestAudioFocus(this,
                                 AudioManager.STREAM_MUSIC,
@@ -226,10 +203,15 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
             mp.pause();
         }
         updateNotification();
-        if (currentChapter > 1 && currentChapter < lastChapter)
-            pref.edit().putInt(LAST_PLAY_TRACK, currentChapter).apply();
+        saveCurrentPlayingData();
         mHandler.postDelayed(checkServiceInactiveInterval, 1000 * 60 * 10);
 
+    }
+
+    private void saveCurrentPlayingData() {
+        Parasha parasha = myApplication.parahsot.get(PlayerActivity.currentParashPosition);
+        parasha.lastPlayedTrack = PlayerActivity.currentTrack;
+        parasha.lastPlayedPosition = currentDuration;
     }
 
     private void seekTo(int moveTo, boolean absValue) {
@@ -252,7 +234,7 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
     }
 
 
-    public void updateSeekBar() {
+    public void updateCurrentTime() {
         mHandler.postDelayed(mUpdateTimeTask, 100);//little delay so mp.isPlaying() will update
     }
 
@@ -260,15 +242,14 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
         public void run() {
             if (mp.isPlaying()) {
                 currentDuration = mp.getCurrentPosition();
-                PlayerActivity activity = appContext.getPlayerActivity();
+                /*PlayerActivity activity = myApplication.getPlayerActivity();
                 if (activity != null) {
                     activity.updatePlayerInUIThread(false);
-                }
+                }*/
                 mHandler.postDelayed(this, 1000);
             } else {
                 mHandler.removeCallbacks(mUpdateTimeTask);
             }
-
         }
     };
 
@@ -277,18 +258,12 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-       /* if (currentChapter == lastChapter)
+        if (PlayerActivity.currentTrack == PlayerActivity.numberOfTracks - 1)
             endPlay();
         else {
-            currentChapter++;
-            makePlaying();
+            PlayerActivity.currentTrack++;
+            makePlaying(myApplication.parahsot.get(PlayerActivity.currentParashPosition).paths.get(PlayerActivity.currentTrack));
         }
-        if (MainActivity.foreground) {
-            Fragment frag = ((PagerAdapter) appContext.getPlayerActivity().pager.getAdapter()).getCurrentFragment();
-            if (frag instanceof FragmentStats)
-                ((FragmentStats) frag).adapter.notifyDataSetChanged();
-        }*/
-
     }
 
     @Override
@@ -297,9 +272,9 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
         mp.start();
         playing = true;
         updateNotification();
-        PlayerActivity activity = appContext.getPlayerActivity();
+        PlayerActivity activity = myApplication.getPlayerActivity();
         if (activity != null) {
-            updateSeekBar();
+            updateCurrentTime();
             activity.updatePlayerInUIThread(true);
         }
     }
@@ -350,40 +325,6 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
         startForeground(1, notification);*/
 
         //manager.notify(0, notification);
-    }
-
-    public void setListeners(RemoteViews view) {
-     /*   //icon + textField listener
-        Intent icon = new Intent(this, MainActivity.class);
-        PendingIntent pIcon = PendingIntent.getActivity(this, 0, icon, 0);
-        view.setOnClickPendingIntent(R.id.icon, pIcon);
-        view.setOnClickPendingIntent(R.id.text, pIcon);
-
-        Intent playingIntent = new Intent(this, PlayingService.class);
-
-        //stop listener
-        //Intent stop = new Intent(this, PlayingService);
-        playingIntent.putExtra(PlayingService.COMMAND, PlayingService.END_PLAY);
-        PendingIntent pStop = PendingIntent.getService(this, 1, playingIntent, 0);
-        view.setOnClickPendingIntent(R.id.stop, pStop);
-
-        //pause listener
-        //Intent pause = new Intent(this, notifiactionReceiver.class);
-        playingIntent.putExtra(PlayingService.COMMAND, PlayingService.PLAY_PRESSED);
-        PendingIntent pPause = PendingIntent.getService(this, 2, playingIntent, 0);
-        view.setOnClickPendingIntent(R.id.pause, pPause);
-
-        //next listener
-        //Intent next = new Intent(this, notifiactionReceiver.class);
-        playingIntent.putExtra(PlayingService.COMMAND, PlayingService.CHAPTER_NEXT);
-        PendingIntent pNext = PendingIntent.getService(this, 3, playingIntent, 0);
-        view.setOnClickPendingIntent(R.id.next, pNext);
-
-        //previous listener
-        //Intent previous = new Intent(this, notifiactionReceiver.class);
-        playingIntent.putExtra(PlayingService.COMMAND, PlayingService.CHAPTER_PREVIOUS);
-        PendingIntent pPrevious = PendingIntent.getService(this, 4, playingIntent, 0);
-        view.setOnClickPendingIntent(R.id.previous, pPrevious);*/
     }
 
     @Override

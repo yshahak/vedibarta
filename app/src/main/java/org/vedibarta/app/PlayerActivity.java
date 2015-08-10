@@ -20,12 +20,12 @@ import android.widget.Toast;
 public class PlayerActivity extends Activity implements
 		SeekBar.OnSeekBarChangeListener, View.OnClickListener {
     private static final String EXTRA_FILE_IN_DEVICE = "FILE_EXIST";
-    public static final String EXTRA_PATH = "PATH";
-    private static final String EXTRA_TRACK = "TRACK";
-    private static final String EXTRA_CURRENT = "CURRENT";
-    private static final String EXTRA_COUNT = "COUNT";
+    //public static final String EXTRA_PATH = "PATH";
+   // private static final String EXTRA_TRACK = "TRACK";
+    //private static final String EXTRA_CURRENT = "CURRENT";
+    //private static final String EXTRA_COUNT = "COUNT";
     private static final String EXTRA_LAUNCH = "launch";
-	public  static final String EXTRA_PARASHA_DATA = "PARASHA_DATA";
+	public static final String EXTRA_PARASHA_DATA = "PARASHA_DATA";
     private TextView songCurrentDurationLabel;
 	private TextView songTotalDurationLabel;
 	private TextView songTitleLabel;
@@ -33,29 +33,25 @@ public class PlayerActivity extends Activity implements
 
     private ServiceConnection serviceConnection;
 	Intent playingIntent;
-
-	int currentTrack;
+    MyApplication myApplication;
 	private SeekBar songProgressBar;
-	private Utilities utils;
 	// Handler to update UI timer, progress bar etc,.
 	private boolean fileExist;
 
 	private SharedPreferences myPref;
 	static NotificationManager mNotificationManager;
-	Parasha parasha;
+    static int currentParashPosition, currentTrack, numberOfTracks;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+        super.onCreate(savedInstanceState);
 		((MyApplication)getApplication()).setPlayerActivity(this);
 		setContentView(R.layout.player1);
-		currentTrack = 1;
 		myPref = getPreferences(0);
-		utils = new Utilities();
-
+        myApplication = (MyApplication)getApplication();
 		playingIntent = new Intent(this, PlayingServiceNew.class);
 
-		parasha =  getIntent().getParcelableExtra(EXTRA_PARASHA_DATA);
+		//parasha =  getIntent().getParcelableExtra(EXTRA_PARASHA_DATA);
 
 		// bind to our service by first creating a new playingIntent
 		serviceConnection = new ServiceConnection() {
@@ -96,6 +92,8 @@ public class PlayerActivity extends Activity implements
 	@Override
 	protected void onResume() {
 		super.onResume();
+        currentParashPosition = myApplication.getCurrentParashaPosition();
+        numberOfTracks = myApplication.parahsot.get(currentParashPosition).totalTracks;
 		if (mNotificationManager != null)
 			mNotificationManager.cancel(1);
 		// for update the file about the last data of playing state
@@ -107,23 +105,21 @@ public class PlayerActivity extends Activity implements
         if (PlayingServiceNew.playing ) {
             if (getIntent().getBooleanExtra(EXTRA_LAUNCH, false)) {
                 if (fileExist) {
-                    currentTrack = getIntent().getIntExtra(EXTRA_COUNT, 1);
-                    playingIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
-                } else {
-                    currentTrack = 1;
+                    //currentTrack = getIntent().getIntExtra(EXTRA_COUNT, 1);
+                    //playingIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
                 }
-                playingIntent.putExtra(EXTRA_PATH, parasha.paths.get(currentTrack - 1));
+                //playingIntent.putExtra(EXTRA_PATH, myApplication.parahsot.get(currentParashPosition).paths.get(currentTrack - 1));
                 startService(playingIntent);
                 loadClip();
             }
         }
 		else {
 			if (fileExist) {
-				currentTrack = myPref.getInt(EXTRA_TRACK, 1);
-                playingIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
+				//currentTrack = myPref.getInt(EXTRA_TRACK, 1);
+                //playingIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
 			}
-			playingIntent.putExtra(EXTRA_PATH, parasha.paths.get(currentTrack - 1));
-            playingIntent.putExtra(EXTRA_CURRENT, (long) 0);
+			//playingIntent.putExtra(EXTRA_PATH, myApplication.parahsot.get(currentParashPosition).paths.get(currentTrack - 1));
+            //playingIntent.putExtra(EXTRA_CURRENT, (long) 0);
             startService(playingIntent);
 			loadClip();
 		}
@@ -140,13 +136,7 @@ public class PlayerActivity extends Activity implements
 	public void onStop() {
 		super.onStop();
 		if (fileExist) {
-			String result = getIntent().getStringExtra("PATH") + ";" + currentTrack
-					+ ";" + PlayingServiceNew.currentDuration;
-			/*try {
-				utils.updateLine(ctx, index, true, result);
-			} catch (IOException e) {
-                Mint.logException(e);
-			}*/
+
 		} else {
 			SharedPreferences.Editor editor = myPref.edit();
 			editor.putLong("CURRENT", PlayingServiceNew.currentDuration);
@@ -164,7 +154,7 @@ public class PlayerActivity extends Activity implements
 							getResources().getString(R.string.app_name))
 					.setContentText(
 							getResources().getString(R.string.playing_parashat)
-									+ " " + parasha.label).setAutoCancel(true);
+									+ " " + myApplication.parahsot.get(currentParashPosition).label).setAutoCancel(true);
 			Intent resultIntent = new Intent(getApplicationContext(),
 					PlayerActivity.class);
 			resultIntent.setAction(Intent.ACTION_MAIN);
@@ -185,12 +175,14 @@ public class PlayerActivity extends Activity implements
 		((MyApplication)getApplication()).setPlayerActivity(null);
 		// whenever our activity gets destroyed, unbind from the service
 		unbindService(this.serviceConnection);
+        songProgressBar.removeCallbacks(updatePlayerTime);
 	}
 
 	private void loadClip() {
         // set Progress bar values
         songProgressBar.setProgress(0);
-        songTitleLabel.setText(parasha.label + " " + currentTrack + "/" + parasha.totalTracks);
+        songTitleLabel.setText(myApplication.parahsot.get(currentParashPosition).label + " " + (currentTrack + 1) + "/" +
+                myApplication.parahsot.get(currentParashPosition).totalTracks);
 	}
 
 	@Override
@@ -199,13 +191,7 @@ public class PlayerActivity extends Activity implements
 
 		if (!PlayingServiceNew.playing) {
 			if (fileExist) {
-				String result = getIntent().getStringExtra("PATH") + ";"
-						+ currentTrack + ";" + PlayingServiceNew.currentDuration;
-				/*try {
-					utils.updateLine(ctx, index, true, result);
-				} catch (IOException e) {
-                    Mint.logException(e);
-				}*/
+
 			} else {
 				playingIntent.putExtra(PlayingServiceNew.COMMAND, 2);
 				startService(playingIntent);
@@ -222,56 +208,38 @@ public class PlayerActivity extends Activity implements
 	@Override
 	public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
 	}
-
-	/**
-	 * When user starts moving the progress handler
-	 * */
 	@Override
 	public void onStartTrackingTouch(SeekBar seekBar) {
-		playingIntent.putExtra(PlayingServiceNew.COMMAND, 4);
-		startService(playingIntent);
         progressIsDragging = true;
 	}
 
 	@Override
 	public void onStopTrackingTouch(SeekBar seekBar) {
-		playingIntent.putExtra(PlayingServiceNew.COMMAND, 5);
-		int currentPosition = utils.progressToTimer(
-				 seekBar.getProgress(),  PlayingServiceNew.totalDuration);
-		playingIntent.putExtra("SEEK", currentPosition);
-		startService(playingIntent);
-		play.setImageResource(R.drawable.btn_pause);
+		int currentPosition = Utilities.progressToTimer(seekBar.getProgress(),  PlayingServiceNew.totalDuration);
+        playingIntent.putExtra("MOVE_TO", currentPosition);
+        playingIntent.putExtra("ABS_VALUE", true);
+        playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.SEEK_TO);
+        startService(playingIntent);
         progressIsDragging = false;
 	}
 
 	private void clickEvent(int add) {
 		currentTrack = currentTrack + add;
-		if (currentTrack < parasha.totalTracks && currentTrack >= 0) {
-			try {
-				if (!fileExist)
-					Toast.makeText(this,getResources().getString(R.string.begin_playing),	Toast.LENGTH_SHORT).show();
-				playingIntent.putExtra("PATH", parasha.paths.get(currentTrack));
-				playingIntent.putExtra(PlayingServiceNew.COMMAND, 1);
-				startService(playingIntent);
-				loadClip();
-				play.setImageResource(R.drawable.btn_play);
-				currentTrack++;
-			} catch (Throwable t) {
-			}
-		} else {
-			currentTrack = 1;
-			playingIntent.putExtra(PlayingServiceNew.COMMAND, 6);
-			startService(playingIntent);
-			runOnUiThread(new Runnable() {
-				public void run() {
-					Toast.makeText(PlayerActivity.this,
-							getResources().getString(R.string.return_main),
-							Toast.LENGTH_SHORT).show();
-				}
-			});
-			finish();
-		}
-
+        if (currentTrack < 0) { // previus pressed when playing first track
+            currentTrack = 0;
+            playingIntent.putExtra("MOVE_TO", 0);
+            playingIntent.putExtra("ABS_VALUE", true);
+            playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.SEEK_TO);
+            startService(playingIntent);
+        }else if (!(currentTrack < numberOfTracks)){ // next pressed when playing last track
+            currentTrack = numberOfTracks - 1;
+        } else {
+            if (!fileExist)
+                Toast.makeText(this,getResources().getString(R.string.begin_playing), Toast.LENGTH_SHORT).show();
+            playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.START_PLAY);
+            startService(playingIntent);
+            loadClip();
+        }
 	}
 
 
@@ -287,10 +255,10 @@ public class PlayerActivity extends Activity implements
                 startService(playingIntent);
                 break;
             case R.id.btnNext:
-                clickEvent(0);
+                clickEvent(1);
                 break;
             case R.id.btnPrevious:
-                clickEvent(-2);
+                clickEvent(-1);
                 break;
             case R.id.btnForward:
                 playingIntent.putExtra("MOVE_TO", 10000);
@@ -322,8 +290,9 @@ public class PlayerActivity extends Activity implements
         @Override
         public void run() {
             play.setImageResource(R.drawable.btn_pause);
-            songTitleLabel.setText(parasha.label + " "+ currentTrack + "/" + parasha.totalTracks);
-            songTotalDurationLabel.setText("" + utils.milliSecondsToTimer((long) PlayingServiceNew.totalDuration));
+            songTitleLabel.setText(myApplication.parahsot.get(currentParashPosition).label + " " + (currentTrack + 1)
+                    + "/" + myApplication.parahsot.get(currentParashPosition).totalTracks);
+            songTotalDurationLabel.setText("" + Utilities.milliSecondsToTimer((long) PlayingServiceNew.totalDuration));
         }
     };
 
@@ -332,11 +301,12 @@ public class PlayerActivity extends Activity implements
         @Override
         public void run() {
             if (!progressIsDragging) {
-                songCurrentDurationLabel.setText("" + utils.milliSecondsToTimer( PlayingServiceNew.currentDuration));
+                songCurrentDurationLabel.setText("" + Utilities.milliSecondsToTimer( PlayingServiceNew.currentDuration));
                 // Updating progress bar
-                int progress = (utils.getProgressPercentage(PlayingServiceNew.currentDuration, (long) PlayingServiceNew.totalDuration));
+                int progress = (Utilities.getProgressPercentage(PlayingServiceNew.currentDuration, (long) PlayingServiceNew.totalDuration));
                 songProgressBar.setProgress(progress);
             }
+            songProgressBar.postDelayed(this, 1000);
         }
     };
 

@@ -28,27 +28,40 @@ public class FragmentParashot extends ListFragment {
 
 		ImageButton play;
 		ImageButton download;
-        TextView label;
+        String[] list;
 
 		public CustomArray(Context context, int resource1, int resource2, String[] list) {
 			super(context, resource1, resource2, list);
+            this.list = list;
+        }
 
+
+
+        class ViewHolder{
+
+			public ViewHolder(TextView label) {
+				this.label = label;
+			}
+			int position;
+			TextView label;
 		}
 
 		@Override
 		public View getView(final int position, View convertView, ViewGroup parent) {
+			ViewHolder viewHolder;
 			if (convertView == null) {
 				convertView = super.getView(position, null, parent);
 				play = (ImageButton) convertView.findViewById(R.id.btn_play);
 				download = (ImageButton) convertView.findViewById(R.id.btn_download);
-                label = (TextView)convertView.findViewById(R.id.label);
+				viewHolder = new ViewHolder((TextView)convertView.findViewById(R.id.label));
 				play.setOnClickListener(this);
 				download.setOnClickListener(this);
-                label.setOnClickListener(this);
-			}
-			play.setTag(position);
-            label.setTag(position);
-			download.setTag(position);
+				viewHolder.label.setOnClickListener(this);
+				convertView.setTag(viewHolder);
+			} else
+				viewHolder = (ViewHolder) convertView.getTag();
+            viewHolder.label.setText(getItem(position));
+            viewHolder.position = position;
 			return convertView;
 		}
 
@@ -56,17 +69,22 @@ public class FragmentParashot extends ListFragment {
 		@Override
 		public void onClick(View view) {
 			if (Utilities.isNetworkAvailable(getActivity())){
-				int position =  (Integer)view.getTag();
-				Parasha parasha = ((MyApplication)getActivity().getApplication()).parahsot.get(position);
+				int  position =  ((ViewHolder)((View)view.getParent()).getTag()).position;;
+				Intent i;
 				switch (view.getId()) {
                     case R.id.label:
+						((MyApplication)getActivity().getApplication()).setCurrentParashaPosition(position);
+						Toast.makeText(getActivity(), getResources().getString(R.string.begin_playing), Toast.LENGTH_SHORT).show();
+						i = new Intent(getContext(), PlayerActivity.class);
+						startActivity(i);						break;
                     case R.id.btn_play:
-                        Toast.makeText(getActivity(), getResources().getString(R.string.begin_playing), Toast.LENGTH_SHORT).show();
-                        Intent i = new Intent(getContext(), PlayerActivity.class);
-                        i.putExtra(PlayerActivity.EXTRA_PARASHA_DATA, parasha);
+						((MyApplication)getActivity().getApplication()).setCurrentParashaPosition(position);
+						Toast.makeText(getActivity(), getResources().getString(R.string.begin_playing), Toast.LENGTH_SHORT).show();
+                        i = new Intent(getContext(), PlayerActivity.class);
                         startActivity(i);
                         break;
                     case R.id.btn_download:
+						/*parasha = ((MyApplication)getActivity().getApplication()).parahsot.get(position);
                         if (parasha.downloaded) {
                             Toast.makeText(getActivity(), R.string.alreadyDownloaded, Toast.LENGTH_LONG).show();
                             return;
@@ -77,7 +95,7 @@ public class FragmentParashot extends ListFragment {
                         else if ((getActivity().getExternalFilesDir(null).getFreeSpace() / 1048576) > 300){
 
                         } else
-                            Toast.makeText(getActivity(),getString(R.string.full_memory), Toast.LENGTH_LONG).show();
+                            Toast.makeText(getActivity(),getString(R.string.full_memory), Toast.LENGTH_LONG).show();*/
                         break;
 			    }
 			} else {
