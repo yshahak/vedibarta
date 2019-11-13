@@ -20,7 +20,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.splunk.mint.Mint;
+//import com.splunk.mint.Mint;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +43,6 @@ public class FragmentHoradot extends ListFragment {
 	private ArrayList<Integer> myPosition;
 	private TextView mTextView;
 	
-	Utilities util = new Utilities();
 	File SD;
 	String path;
 	String item = null;
@@ -80,7 +79,7 @@ public class FragmentHoradot extends ListFragment {
 		adapter = new CustomArray(getActivity(), R.layout.row2, R.id.text1,
 				existParashotlist);
 		setListAdapter(adapter);
-		if (util.isMyServiceRunning(ctx) && (boolean)((Activity) ctx).getIntent().getBooleanExtra("playing", false)) {
+		if (Utilities.isMyServiceRunning(ctx) && (boolean)((Activity) ctx).getIntent().getBooleanExtra("playing", false)) {
 			Button myButton = new Button(ctx);
 			myButton.setText(R.string.backToPlayer);
 			myButton.setOnClickListener(new View.OnClickListener() {
@@ -113,7 +112,7 @@ public class FragmentHoradot extends ListFragment {
 												R.string.begin_playing),
 										Toast.LENGTH_SHORT).show();
 								Intent i = new Intent(ctx, PlayerActivity.class);
-								if (util.isMyServiceRunning(ctx) && (boolean)((Activity) ctx).getIntent().getBooleanExtra("playing", false)){ 
+								if (Utilities.isMyServiceRunning(ctx) && (boolean)((Activity) ctx).getIntent().getBooleanExtra("playing", false)){
 									i.putExtra("launch", true);
 								}
 								i.putExtra("FILE_EXIST", true);
@@ -156,9 +155,10 @@ public class FragmentHoradot extends ListFragment {
 								mydirIn.delete();
 								mydirEx.delete();
 								try {
-									util.updateLine(ctx, position, false, null);
+									Utilities.updateLine(ctx, position, false, null);
 								} catch (IOException e) {
-                                    Mint.logException(e);
+									e.printStackTrace();
+//                                    Mint.logException(e);
 								}
 								getFiles();
 
@@ -174,11 +174,11 @@ public class FragmentHoradot extends ListFragment {
 	}
 
 	private void getFiles() {
-		int size = util.readFromFile(ctx, true).size();
+		int size = Utilities.readFromFile(ctx, true).size();
 		existParashotlist.clear();
 		if (size > 0) {
-			numbersList = util.readFromFile(ctx, true);
-			dataList = util.readFromFile(ctx, false);
+			numbersList = Utilities.readFromFile(ctx, true);
+			dataList = Utilities.readFromFile(ctx, false);
 			for (int i = 0; i < size; i++) {
 				existParashotlist.add(i, data.getParashaHeb(Integer.valueOf(numbersList.get(i))));
 				String[] separated = dataList.get(i).split(";");
@@ -240,7 +240,7 @@ public class FragmentHoradot extends ListFragment {
 					pstn = Integer.valueOf(numbersList.get(position));
 					item = existParashotlist.get(position);
 					Intent i = new Intent(ctx, PlayerActivity.class);
-					if (util.isMyServiceRunning(ctx) && (boolean)((Activity) ctx).getIntent().getBooleanExtra("playing", false)){ 
+					if (Utilities.isMyServiceRunning(ctx) && (boolean)((Activity) ctx).getIntent().getBooleanExtra("playing", false)){
 						i.putExtra("launch", true);
 					}
 					i.putExtra("FILE_EXIST", true);
@@ -285,9 +285,10 @@ public class FragmentHoradot extends ListFragment {
 					mydirIn.delete();
 					mydirEx.delete();
 					try {
-						util.updateLine(ctx, position, false, null);
+						Utilities.updateLine(ctx, position, false, null);
 					} catch (IOException e) {
-                        Mint.logException(e);
+						e.printStackTrace();
+//                        Mint.logException(e);
 					}
 					getFiles();
 

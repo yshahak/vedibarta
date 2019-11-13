@@ -15,7 +15,7 @@ import android.os.IBinder;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 
-import com.splunk.mint.Mint;
+//import com.splunk.mint.Mint;
 
 public class PlayingService extends Service implements
 		MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener,
@@ -78,7 +78,8 @@ public class PlayingService extends Service implements
 						sendBroadcast(broadcastIntent);
 					}
 				} catch (Exception e) {
-                    Mint.logException(e);
+					e.printStackTrace();
+//                    Mint.logException(e);
 				}
 
 			}
@@ -163,7 +164,8 @@ public class PlayingService extends Service implements
 					updateProgressBar();
 
 				} catch (Exception e) {
-					Mint.logException(e);
+					e.printStackTrace();
+//					Mint.logException(e);
 				}
 				break;
 			case 2:
@@ -202,7 +204,8 @@ public class PlayingService extends Service implements
 						}
 					}
 				} catch (IllegalStateException e) {
-                    Mint.logException(e);
+					e.printStackTrace();
+//                    Mint.logException(e);
 				}
 				break;
 			case 8:
@@ -218,7 +221,8 @@ public class PlayingService extends Service implements
 						}
 					}
 				} catch (IllegalStateException e) {
-                    Mint.logException(e);
+					e.printStackTrace();
+//                    Mint.logException(e);
 				}
 				break;
 			}

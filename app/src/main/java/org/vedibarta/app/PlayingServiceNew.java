@@ -18,7 +18,7 @@ import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.widget.RemoteViews;
 
-import com.splunk.mint.Mint;
+//import com.splunk.mint.Mint;
 
 public class PlayingServiceNew extends Service implements MediaPlayer.OnPreparedListener, OnCompletionListener, OnAudioFocusChangeListener {
     Context ctx;
@@ -182,7 +182,7 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
                 }
             }
         } catch (Exception e) {
-            Mint.logException(e);
+//            Mint.logException(e);
             e.printStackTrace();
         }
     }

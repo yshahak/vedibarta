@@ -419,13 +419,13 @@ public class ParashotData {
 		int pstn = position + 1;
 		if (position < 12)
 			book = "1-ber/";
-		else if (11 < position && position < 23) {
+		else if (position < 23) {
 			book = "2-shm/";
 			pstn = pstn - 12;
-		} else if (22 < position && position < 33) {
+		} else if (position < 33) {
 			book = "3-vay/";
 			pstn = pstn - 23;
-		} else if (32 < position && position < 43) {
+		} else if (position < 43) {
 			book = "4-bam/";
 			pstn = pstn - 33;
 		} else {

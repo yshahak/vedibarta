@@ -16,8 +16,6 @@ public class MyApplication extends Application {
 
     private final String TAG = getClass().getSimpleName();
 
-    SharedPreferences pref;
-
     PlayerActivity playerActivity;
     SplashActivity splashActivity;
     DownloadService downloadService;
@@ -39,6 +37,7 @@ public class MyApplication extends Application {
         }else {
 
         }
+        NotificationHelper.createNotificationChannel(this);
         //Mint.initAndStartSession(this, MINT_TAG);
     }
 

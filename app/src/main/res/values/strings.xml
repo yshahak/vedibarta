@@ -32,6 +32,7 @@
     <string name="vedibarta">קישור ישיר לאתר ודיברת</string>
     <string name="comment_success">הערתך נשלחה בהצלחה!</string>
     <string name="comment_no_success">אין גישה לרשת, נסה במועד מאוחר יותר</string>
+    <string name="comment_error">שליחת ההערה נכשלה</string>
     <string name="direction">rtl</string>
     <string name="app_dediaction">האפליקציה מוקדשת לזכרה של אורלי קופלוביץ</string>
     <string name="developer_name">מפתח : יעקב שחק</string>

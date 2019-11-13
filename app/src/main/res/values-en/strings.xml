@@ -32,6 +32,7 @@
     <string name="vedibarta">Direct link to official website</string>
     <string name="comment_success">Your comment send, thank you!</string>
     <string name="comment_no_success">No available network, please try later</string>
+    <string name="comment_error">could not complete the action!</string>
     <string name="direction">ltr</string>
     <string name="app_dediaction">This app is dedicated in memory of Orly Kiplovitch</string>
     <string name="developer_name">Developer : Yaakov Shahak</string>

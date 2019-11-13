@@ -73,18 +73,13 @@ public class FragmentParashot extends ListFragment {
 				Intent i;
 				switch (view.getId()) {
                     case R.id.label:
+					case R.id.btn_play:
 						((MyApplication)getActivity().getApplication()).setCurrentParashaPosition(position);
 						Toast.makeText(getActivity(), getResources().getString(R.string.begin_playing), Toast.LENGTH_SHORT).show();
 						i = new Intent(getContext(), PlayerActivity.class);
 						startActivity(i);						break;
-                    case R.id.btn_play:
-						((MyApplication)getActivity().getApplication()).setCurrentParashaPosition(position);
-						Toast.makeText(getActivity(), getResources().getString(R.string.begin_playing), Toast.LENGTH_SHORT).show();
-                        i = new Intent(getContext(), PlayerActivity.class);
-                        startActivity(i);
-                        break;
-                    case R.id.btn_download:
-						/*parasha = ((MyApplication)getActivity().getApplication()).parahsot.get(position);
+					case R.id.btn_download:
+						Parasha parasha = ((MyApplication) getActivity().getApplication()).parahsot.get(position);
                         if (parasha.downloaded) {
                             Toast.makeText(getActivity(), R.string.alreadyDownloaded, Toast.LENGTH_LONG).show();
                             return;
@@ -95,7 +90,7 @@ public class FragmentParashot extends ListFragment {
                         else if ((getActivity().getExternalFilesDir(null).getFreeSpace() / 1048576) > 300){
 
                         } else
-                            Toast.makeText(getActivity(),getString(R.string.full_memory), Toast.LENGTH_LONG).show();*/
+                            Toast.makeText(getActivity(),getString(R.string.full_memory), Toast.LENGTH_LONG).show();
                         break;
 			    }
 			} else {

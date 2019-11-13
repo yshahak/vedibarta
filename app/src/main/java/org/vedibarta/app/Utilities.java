@@ -7,7 +7,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.text.TextUtils;
 
-import com.splunk.mint.Mint;
+//import com.splunk.mint.Mint;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -122,7 +122,7 @@ public class Utilities {
 	}
 
 	// Check vaildation of email adress
-	public boolean isValidEmail(CharSequence target) {
+	public static boolean isValidEmail(CharSequence target) {
 		if (TextUtils.isEmpty(target)) {
 			return false;
 		} else {
@@ -149,7 +149,8 @@ public class Utilities {
 			bufferedWriter.close();
 
 		} catch (IOException e) {
-            Mint.logException(e);
+			e.printStackTrace();
+//            Mint.logException(e);
 		}
 	}
 
@@ -175,15 +176,17 @@ public class Utilities {
 				}
 				bufferedReader.close();
 			} catch (FileNotFoundException e) {
-                Mint.logException(e);
+				e.printStackTrace();
+//                Mint.logException(e);
 			} catch (IOException e) {
-                Mint.logException(e);
+				e.printStackTrace();
+//                Mint.logException(e);
 			}
 		}
 		return ret;
 	}
 
-	public void updateLine(Context ctx, int lineIndex, boolean replace,
+	public static void updateLine(Context ctx, int lineIndex, boolean replace,
 			String replacement) throws IOException {
 		File TEXTFILES = new File(ctx.getFilesDir(), "TEXTFILES");
 		File[] files = { new File(TEXTFILES, FILE_NUMBERS),

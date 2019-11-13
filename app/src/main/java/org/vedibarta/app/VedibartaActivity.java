@@ -14,13 +14,14 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBar.Tab;
 import android.support.v7.app.ActionBar.TabListener;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
-import com.splunk.mint.Mint;
+//import com.splunk.mint.Mint;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -31,8 +32,13 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 
+import pub.devrel.easypermissions.AfterPermissionGranted;
+import pub.devrel.easypermissions.EasyPermissions;
 
-public class VedibartaActivity extends ActionBarActivity {
+import static org.vedibarta.app.NotificationHelper.CHANNEL_ID;
+
+
+public class VedibartaActivity extends AppCompatActivity {
 	static ActionBar actionBar;
 	public ProgressDialog mProgress;
 	Utilities util;
@@ -45,13 +51,13 @@ public class VedibartaActivity extends ActionBarActivity {
 	ArrayList<String> names;
 	static ArrayList<String> logList = new ArrayList<String>();
 
-	NotificationManager mNotifyManager;
-	Builder mBuilder;
+	NotificationManagerCompat mNotifyManager;
+	NotificationCompat.Builder mBuilder;
 
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-        Mint.initAndStartSession(this, "0ea8e3c0");
+//        Mint.initAndStartSession(this, "0ea8e3c0");
 		firstEntry = true;
 		super.onCreate(savedInstanceState);
 		util = new Utilities();
@@ -125,10 +131,18 @@ public class VedibartaActivity extends ActionBarActivity {
 
 	}
 
+	@Override
+	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-	public ArrayList<String> getList() {
-		return logList;
+		// Forward results to EasyPermissions
+		EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
 	}
+
+
+//	public ArrayList<String> getList() {
+//		return logList;
+//	}
 
 	public void updateDownload(String item, int pstn, long memory) {
 
@@ -141,8 +155,9 @@ public class VedibartaActivity extends ActionBarActivity {
 			downloading = true;
 			Toast.makeText(this, R.string.beginDownloading, Toast.LENGTH_LONG)
 					.show();
-			mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-			mBuilder = new NotificationCompat.Builder(this);
+			mNotifyManager = NotificationManagerCompat.from(this);
+			mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID);
+			final PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(), 0);
 			mBuilder.setContentTitle(
 					getResources().getString(R.string.app_name))
 					.setContentText(
@@ -151,7 +166,7 @@ public class VedibartaActivity extends ActionBarActivity {
 									+ "  " + item)
 					.setSmallIcon(R.drawable.stat_sys_download_anim1)
 					.setContentIntent(
-							PendingIntent.getActivity(this, 0, new Intent(), 0));
+							pendingIntent);
 		} else {
 			Toast.makeText(this,
 					getResources().getString(R.string.joinToDownloadList),
@@ -251,6 +266,7 @@ public class VedibartaActivity extends ActionBarActivity {
 		}
 	}
 
+//	@AfterPermissionGranted(RC_CAMERA_AND_LOCATION)
 	protected void downloadHtmlFiles() {
 		try {
 			int count;
@@ -276,7 +292,8 @@ public class VedibartaActivity extends ActionBarActivity {
 			}
 
 		} catch (IOException e) {
-            Mint.logException(e);
+			e.printStackTrace();
+//            Mint.logException(e);
 		}
 	}
 
