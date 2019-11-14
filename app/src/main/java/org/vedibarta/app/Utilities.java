@@ -131,7 +131,7 @@ public class Utilities {
 		}
 	}
 
-	public void writeToFile(String data, boolean numbers, Context ctx) {
+	public static void writeToFile(String data, boolean numbers, Context ctx) {
 		try {
 			File TEXTFILES = new File(ctx.getFilesDir(), "TEXTFILES");
 			if (!TEXTFILES.exists())
