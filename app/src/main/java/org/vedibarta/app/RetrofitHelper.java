@@ -21,7 +21,7 @@ class RetrofitHelper {
 
     private static final String TAG = RetrofitHelper.class.getSimpleName();
 
-    private final static String BASE_URL_VEDIBARTA = "https://www.vedibarta.org/";
+    private final static String BASE_URL_VEDIBARTA = "https://vedibarta.org/";
 
     public interface SendFeedbackService {
         @FormUrlEncoded

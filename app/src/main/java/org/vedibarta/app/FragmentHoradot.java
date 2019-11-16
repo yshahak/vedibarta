@@ -1,12 +1,13 @@
 package org.vedibarta.app;
 
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.ListFragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,7 +16,6 @@ import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,71 +26,42 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class FragmentHoradot extends ListFragment {
 
-	private AlertDialog mdialog;
-	int pstn;
-	long freeSD = 0;
-	long freeInternal;
-	private ParashotData data;
-	private ArrayList<String> existParashotlist;
-	private ArrayList<String> numbersList;
-	private ArrayList<String> dataList;
-	private ArrayList<String> tracksList;
-	private ArrayList<String> currentPositionList;
-	private ArrayList<String> pathesList;
-
-	private ArrayList<Integer> myPosition;
-	private TextView mTextView;
-	
-	File SD;
-	String path;
-	String item = null;
-	Context ctx;
-	Fragment frag;
+	private long freeSD = 0;
+	private ArrayList<String> existParashotList = new ArrayList<>();
+	private ArrayList<String> downloadedParsIndexes = new ArrayList<>();
 	private CustomArray adapter;
-	View rootView;
-	
 
+
+	@SuppressLint("SetTextI18n")
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
-		rootView = inflater.inflate(R.layout.list, container, false);
-		mTextView = (TextView) rootView.findViewById(R.id.memory);
-		ctx = getActivity();
-		frag = this.getParentFragment();
-		SD = ctx.getExternalFilesDir(null);
-		freeInternal = (ctx.getFilesDir().getFreeSpace()) / 1048576;
+							 Bundle savedInstanceState) {
+		View rootView = inflater.inflate(R.layout.list, container, false);
+		TextView mTextView = rootView.findViewById(R.id.memory);
+		File SD = getActivity().getExternalFilesDir(null);
+		long freeInternal = (getActivity().getFilesDir().getFreeSpace()) / 1048576;
 		if (SD != null)
 			freeSD = SD.getFreeSpace() / 1048576;
 		mTextView.setText(getResources().getString(R.string.spaceSD)
-				+ Long.toString(freeSD) + "MB" + '\n'
+				+ freeSD + "MB" + '\n'
 				+ getResources().getString(R.string.space_internal)
-				+ Long.toString(freeInternal) + "MB");
-		data = new ParashotData();
-		myPosition = new ArrayList<Integer>();
-		existParashotlist = new ArrayList<String>();
-		numbersList = new ArrayList<String>();
-		dataList = new ArrayList<String>();
-		pathesList =  new ArrayList<String>();
-		tracksList = new ArrayList<String>();
-		currentPositionList = new ArrayList<String>();
-
-		getFiles();
-		adapter = new CustomArray(getActivity(), R.layout.row2, R.id.text1,
-				existParashotlist);
+				+ freeInternal + "MB");
+		adapter = new CustomArray(getActivity(), R.layout.row2, R.id.text1, existParashotList);
 		setListAdapter(adapter);
-		if (Utilities.isMyServiceRunning(ctx) && (boolean)((Activity) ctx).getIntent().getBooleanExtra("playing", false)) {
-			Button myButton = new Button(ctx);
+		getFiles();
+		if (Utilities.isMyServiceRunning(getActivity()) && getActivity().getIntent().getBooleanExtra("playing", false)) {
+			Button myButton = new Button(getActivity());
 			myButton.setText(R.string.backToPlayer);
 			myButton.setOnClickListener(new View.OnClickListener() {
 			    @Override
 			    public void onClick(View v) {
-			    	startActivity(new Intent(ctx, PlayerActivity.class));
+			    	startActivity(new Intent(getActivity(), PlayerActivity.class));
 			    }
 			});
 			LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1);
-			LinearLayout ll = (LinearLayout) rootView
-					.findViewById(R.id.llForButton);
+			LinearLayout ll = rootView.findViewById(R.id.llForButton);
 			myButton.setLayoutParams(params);
 			ll.addView(myButton, params);
 		}
@@ -100,93 +71,45 @@ public class FragmentHoradot extends ListFragment {
 
 	public void onRowClick(final int position) {
 		// Use the Builder class for convenient dialog construction
-		AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		builder.setMessage(getResources().getString(R.string.action_to_made))
 				.setPositiveButton(
 						getResources().getString(R.string.listening),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int id) {
 								Toast.makeText(
-										ctx,
+										getActivity(),
 										getResources().getString(
 												R.string.begin_playing),
 										Toast.LENGTH_SHORT).show();
-								Intent i = new Intent(ctx, PlayerActivity.class);
-								if (Utilities.isMyServiceRunning(ctx) && (boolean)((Activity) ctx).getIntent().getBooleanExtra("playing", false)){
-									i.putExtra("launch", true);
-								}
-								i.putExtra("FILE_EXIST", true);
-								i.putExtra("INDEX", position);
-								i.putExtra("PATH", path);
-								i.putExtra("PARASHA", item);
-								i.putExtra("POSITION", pstn);
-								i.putExtra("COUNT",  Integer.valueOf(tracksList.get(position)));
-								i.putExtra("CURRENT", Long.valueOf(currentPositionList.get(position)));
-								startActivity(i);
+								playParasha(position);
 
 							}
 						})
 				.setNegativeButton(getResources().getString(R.string.delete),
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int id) {
-								File mydirIn;
-								File mydirEx;
-								mydirEx = new File((String) (ctx
-										.getExternalFilesDir(null)
-										+ File.separator + "AudioFiles"),
-										(String) (Integer.toString(myPosition
-												.get(position))));
-								mydirIn = new File((String) (ctx.getFilesDir()
-										+ File.separator + "AudioFiles"),
-										(String) (Integer.toString(myPosition
-												.get(position))));
-								if (mydirIn.isDirectory()) {
-									String[] children = mydirIn.list();
-									for (int i = 0; i < children.length; i++) {
-										new File(mydirIn, children[i]).delete();
-									}
-								}
-								if (mydirEx.isDirectory()) {
-									String[] children = mydirEx.list();
-									for (int i = 0; i < children.length; i++) {
-										new File(mydirEx, children[i]).delete();
-									}
-								}
-								mydirIn.delete();
-								mydirEx.delete();
-								try {
-									Utilities.updateLine(ctx, position, false, null);
-								} catch (IOException e) {
-									e.printStackTrace();
-//                                    Mint.logException(e);
-								}
-								getFiles();
-
-								adapter.notifyDataSetChanged();
-								
-
+								deleteParasha(position);
 							}
 						});
 		// Create the AlertDialog object and return it
-		mdialog = builder.create();
+		AlertDialog mdialog = builder.create();
 		mdialog.show();
 
 	}
 
 	private void getFiles() {
-		int size = Utilities.readFromFile(ctx, true).size();
-		existParashotlist.clear();
-		if (size > 0) {
-			numbersList = Utilities.readFromFile(ctx, true);
-			dataList = Utilities.readFromFile(ctx, false);
-			for (int i = 0; i < size; i++) {
-				existParashotlist.add(i, data.getParashaHeb(Integer.valueOf(numbersList.get(i))));
-				String[] separated = dataList.get(i).split(";");
-				pathesList.add(i, separated[0]);
-				tracksList.add(i, separated[1]);
-				currentPositionList.add(i, separated[2]);
+		existParashotList.clear();
+		final Context activity = getActivity();
+		if (activity != null) {
+			downloadedParsIndexes = Utilities.readFromFile(activity);
+			if (downloadedParsIndexes.size() > 0) {
+				for (int i = 0; i < downloadedParsIndexes.size(); i++) {
+					existParashotList.add(i, ParashotData.getParashaHeb(Integer.valueOf(downloadedParsIndexes.get(i))));
+				}
 			}
 		}
+		adapter.notifyDataSetChanged();
 	}
 
 	@Override
@@ -195,107 +118,77 @@ public class FragmentHoradot extends ListFragment {
 		adapter.notifyDataSetChanged();
 	}
 
-	
+	private void playParasha(int position){
+		final FragmentActivity activity = getActivity();
+		if (activity != null) {
+			((OnStartPlayClicked) activity).onStartPlayClicked(Integer.parseInt(downloadedParsIndexes.get(position)));
+		}
+	}
+
+	private void deleteParasha(int position){
+		String relativePath = ParashotData.getRelativePath(Integer.parseInt(downloadedParsIndexes.get(position)), 0);
+		Utilities.deleteParasha(getContext(), relativePath);
+//		File mydirIn;
+//		File mydirEx;
+//		mydirEx = new File(getActivity()
+//				.getExternalFilesDir(null)
+//				+ File.separator + "AudioFiles",
+//				downloadedParsIndexes.get(position));
+//		mydirIn = new File(getActivity().getFilesDir()
+//				+ File.separator + "AudioFiles",
+//				downloadedParsIndexes.get(position));
+//		if (mydirIn.isDirectory()) {
+//			String[] children = mydirIn.list();
+//			for (String child : children) {
+//				new File(mydirIn, child).delete();
+//			}
+//		}
+//		if (mydirEx.isDirectory()) {
+//			String[] children = mydirEx.list();
+//			for (String child : children) {
+//				new File(mydirEx, child).delete();
+//			}
+//		}
+//		mydirIn.delete();
+//		mydirEx.delete();
+		try {
+			Utilities.updateLine(getActivity(), position);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		getFiles();
+
+	}
 
 	class CustomArray extends ArrayAdapter<String> {
 
-		TextView myText;
-		ImageButton play;
-		ImageButton delete;
-
-		public CustomArray(Context context, int resource1, int resource2,
-				ArrayList<String> list) {
+		CustomArray(Context context, int resource1, int resource2, ArrayList<String> list) {
 			super(context, resource1, resource2, list);
-
 		}
 
+		@NonNull
 		@Override
-		public View getView(final int position, View convertView,
-				ViewGroup parent) {
+		public View getView(final int position, View convertView, @NonNull ViewGroup parent) {
 			
-			View row = convertView;
+			View row;
 			row = super.getView(position, convertView, parent);
 			row.setOnClickListener((new OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					pstn = Integer.valueOf(numbersList.get(position));
-					path = pathesList.get(position);
-					item = existParashotlist.get(position);
-					onRowClick((int) position);
+					onRowClick(position);
 				}
 			}));
-
-			myText = (TextView) row.findViewById(R.id.text1);
-			play = (ImageButton) row.findViewById(R.id.button1);
-			delete = (ImageButton) row.findViewById(R.id.button2);
-
-			play.setOnClickListener(new OnClickListener() {
+			row.findViewById(R.id.button1).setOnClickListener(new OnClickListener() {
 
 				@Override
 				public void onClick(View v) {
-					Toast.makeText(ctx,
-							getResources().getString(R.string.begin_playing),
-							Toast.LENGTH_SHORT).show();
-					path = pathesList.get(position);
-					pstn = Integer.valueOf(numbersList.get(position));
-					item = existParashotlist.get(position);
-					Intent i = new Intent(ctx, PlayerActivity.class);
-					if (Utilities.isMyServiceRunning(ctx) && (boolean)((Activity) ctx).getIntent().getBooleanExtra("playing", false)){
-						i.putExtra("launch", true);
-					}
-					i.putExtra("FILE_EXIST", true);
-					i.putExtra("PATH", path);
-					i.putExtra("INDEX", position);
-					i.putExtra("PARASHA", item);
-					i.putExtra("POSITION", pstn);
-					i.putExtra("COUNT", Integer.valueOf(tracksList.get(position)));
-					i.putExtra("CURRENT", Long.valueOf(currentPositionList.get(position)));
-					startActivity(i);
+					playParasha(position);
 				}
 			});
-
-			delete.setOnClickListener(new OnClickListener() {
-
+			row.findViewById(R.id.button2).setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					//path = patheslist.get(position);
-					//item = existParashotlist.get(position);
-					pstn = Integer.valueOf(numbersList.get(position));
-					File mydirIn;
-					File mydirEx;
-					mydirEx = new File((String) (ctx.getExternalFilesDir(null)
-							+ File.separator + "AudioFiles"), (String) (Integer
-							.toString(pstn)));
-					mydirIn = new File((String) (ctx.getFilesDir()
-							+ File.separator + "AudioFiles"), (String) (Integer
-							.toString(pstn)));
-
-					if (mydirIn.isDirectory()) {
-						String[] children = mydirIn.list();
-						for (int i = 0; i < children.length; i++) {
-							new File(mydirIn, children[i]).delete();
-						}
-					}
-					if (mydirEx.isDirectory()) {
-						String[] children = mydirEx.list();
-						for (int i = 0; i < children.length; i++) {
-							new File(mydirEx, children[i]).delete();
-						}
-					}
-					mydirIn.delete();
-					mydirEx.delete();
-					try {
-						Utilities.updateLine(ctx, position, false, null);
-					} catch (IOException e) {
-						e.printStackTrace();
-//                        Mint.logException(e);
-					}
-					getFiles();
-
-					adapter.notifyDataSetChanged();
-					
-
-					
+					deleteParasha(position);
 				}
 			});
 			return row;

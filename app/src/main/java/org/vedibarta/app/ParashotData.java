@@ -1,11 +1,11 @@
 package org.vedibarta.app;
 
 public class ParashotData {
-	public ParashotData() {
+	private ParashotData() {
 
 	}
 
-    public  static final String [] parashot = new String[] { "בראשית", "נח", "לך לך", "וירא", "חיי שרה",
+    static final String [] parashot = new String[] { "בראשית", "נח", "לך לך", "וירא", "חיי שרה",
             "תולדות", "ויצא", "וישלח", "וישב", "מקץ", "ויגש", "ויחי",
             "שמות", "וארא", "בא", "בשלח", "יתרו", "משפטים", "תרומה",
             "תצוה", "כי תישא", "ויקהל", "פקודי", "ויקרא", "צו", "שמיני",
@@ -15,7 +15,7 @@ public class ParashotData {
             "שופטים", "כי תצא", "כי תבוא", "ניצבים", "וילך", "האזינו",
             "וזאת הברכה" };
 	
-	public static final String[] bereshit = { "bereshit.1a.mp3", "3.0", "13:13",
+	private static final String[] bereshit = { "bereshit.1a.mp3", "3.0", "13:13",
 			"bereshit.1b.mp3", "1.8", "07:58", "bereshit.1c.mp3", "1.0",
 			"04:26", "bereshit.2a.mp3", "2.2", "09:28", "bereshit.2b.mp3",
 			"1.9", "08:07", "bereshit.3a.mp3", "2.7", "11:35",
@@ -26,7 +26,7 @@ public class ParashotData {
 			"09:30", "bereshit.5c.mp3", "2.1", "09:09", "bereshit.6.mp3",
 			"2.2", "09:38", "bereshit.7.mp3", "2.4", "10:29" };
 
-	public static final String[] noah = { "noah.01a.mp3", "2.6", "11:30",
+	private static final String[] noah = { "noah.01a.mp3", "2.6", "11:30",
 			"noah.01b.mp3", "2.4", "10:34", "noah.02a.mp3", "2.0", "08:52",
 			"noah.02b.mp3", "1.5", "06:38", "noah.03.mp3", "1.6", "07:03",
 			"noah.04a.mp3", "2.3", "09:58", "noah.04b.mp3", "1.9", "08:10",
@@ -35,7 +35,7 @@ public class ParashotData {
 			"noah.09.mp3", "2.7", "11:51", "noah.10.mp3", "2.7", "11:43",
 			"noah.11.mp3", "2.1", "08:57" };
 
-	public static final String[] lechlecha = { "lechlecha.01a.mp3", "2.4", "10:23",
+	private static final String[] lechlecha = { "lechlecha.01a.mp3", "2.4", "10:23",
 			"lechlecha.01b.mp3", "2.4", "10:27", "lechlecha.02.mp3", "2.8",
 			"12:08", "lechlecha.03a.mp3", "1.8", "08:02", "lechlecha.03b.mp3",
 			"1.9", "08:10", "lechlecha.04a.mp3", "2.7", "11:40",
@@ -402,7 +402,7 @@ public class ParashotData {
 			"balak", "pinchas", "matot", "massei", "devarim", "vaetchanan",
 			"ekev", "ree", "shoftim", "kitetze", "kitavo", "nitzavim",
 			"vayelech", "haazinu", "vezot" };
-	public static final String[][] parashotNames = { bereshit, noah, lechlecha,
+	private static final String[][] parashotNames = { bereshit, noah, lechlecha,
 			vayera, hayeysara, toldot, vayetze, vayishlach, vayeshev, miketz,
 			vayigash, vayehi, shemot, vaera, bo, beshalach, yitro, mishpatim,
 			teruma, tetzave, kitissa, vayakhel, pekudei, vayikra, tsav,
@@ -411,7 +411,7 @@ public class ParashotData {
 			balak, pinchas, matot, massei, devarim, vaetchanan, ekev, ree,
 			shoftim, kitetze, kitavo, nitzavim, vayelech, haazinu, vezot };
 
-	public static String[] getPath(int position, int track) {
+	static String[] getPath(int position, int track) {
 		String[] data = new String[2];
 		String book;
 		String par;
@@ -442,7 +442,34 @@ public class ParashotData {
 		return  data;
 	}
 
-	public static int getTracksNumber(int position) {
+	static String getRelativePath(int position, int track) {
+		String book;
+		String par;
+		track = track * 3;
+		int pstn = position + 1;
+		if (position < 12)
+			book = "1-ber/";
+		else if (position < 23) {
+			book = "2-shm/";
+			pstn = pstn - 12;
+		} else if (position < 33) {
+			book = "3-vay/";
+			pstn = pstn - 23;
+		} else if (position < 43) {
+			book = "4-bam/";
+			pstn = pstn - 33;
+		} else {
+			book = "5-dev/";
+			pstn = pstn - 43;
+		}
+		if (pstn < 10)
+			par = "0" + pstn + "-" + Names[position] + "/";
+		else
+			par = pstn + "-" + Names[position] + "/";
+		return  book + par + parashotNames[position][track];
+	}
+
+	static int getTracksNumber(int position) {
 		String[] parasha = parashotNames[position];
 		int tracks =  ( parasha).length;
 		return  tracks / 3;

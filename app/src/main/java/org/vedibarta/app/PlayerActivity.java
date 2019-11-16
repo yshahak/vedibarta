@@ -1,5 +1,6 @@
 package org.vedibarta.app;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -10,37 +11,30 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.v4.app.NotificationCompat;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class PlayerActivity extends Activity implements
-        SeekBar.OnSeekBarChangeListener, View.OnClickListener {
-    private static final String EXTRA_FILE_IN_DEVICE = "FILE_EXIST";
-    //public static final String EXTRA_PATH = "PATH";
-    // private static final String EXTRA_TRACK = "TRACK";
-    //private static final String EXTRA_CURRENT = "CURRENT";
-    //private static final String EXTRA_COUNT = "COUNT";
-    private static final String EXTRA_LAUNCH = "launch";
-    public static final String EXTRA_PARASHA_DATA = "PARASHA_DATA";
+public class PlayerActivity extends Activity implements SeekBar.OnSeekBarChangeListener, View.OnClickListener {
+    public static final String EXTRA_FILE_IN_DEVICE = "FILE_EXIST";
+    public static final String EXTRA_LAUNCH = "launch";
     private TextView songCurrentDurationLabel;
     private TextView songTotalDurationLabel;
     private TextView songTitleLabel;
     private ImageButton play;
 
     private ServiceConnection serviceConnection;
-    Intent playingIntent;
-    MyApplication myApplication;
+    private Intent playingIntent;
+    private MyApplication myApplication;
     private SeekBar songProgressBar;
     // Handler to update UI timer, progress bar etc,.
     private boolean fileExist;
 
     private SharedPreferences myPref;
     static NotificationManager mNotificationManager;
-    static int currentParashPosition, currentTrack, numberOfTracks;
+    private int currentParashPosition, currentTrack, numberOfTracks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,8 +44,6 @@ public class PlayerActivity extends Activity implements
         myPref = getPreferences(0);
         myApplication = (MyApplication) getApplication();
         playingIntent = new Intent(this, PlayingServiceNew.class);
-
-        //parasha =  getIntent().getParcelableExtra(EXTRA_PARASHA_DATA);
 
         // bind to our service by first creating a new playingIntent
         serviceConnection = new ServiceConnection() {
@@ -68,16 +60,16 @@ public class PlayerActivity extends Activity implements
         // Supply the Intent & ServiceConnection that will use for the binding
         bindService(playingIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
-        play = (ImageButton) findViewById(R.id.btnPlay);
-        ImageButton next = (ImageButton) findViewById(R.id.btnNext);
-        ImageButton btnForward = (ImageButton) findViewById(R.id.btnForward);
-        ImageButton btnBackward = (ImageButton) findViewById(R.id.btnBackward);
-        ImageButton previous = (ImageButton) findViewById(R.id.btnPrevious);
-        songProgressBar = (SeekBar) findViewById(R.id.songProgressBar);
+        play = findViewById(R.id.btnPlay);
+        ImageButton next = findViewById(R.id.btnNext);
+        ImageButton btnForward = findViewById(R.id.btnForward);
+        ImageButton btnBackward = findViewById(R.id.btnBackward);
+        ImageButton previous = findViewById(R.id.btnPrevious);
+        songProgressBar = findViewById(R.id.songProgressBar);
         songProgressBar.setProgress(0);
-        songCurrentDurationLabel = (TextView) findViewById(R.id.songCurrentDurationLabel);
-        songTotalDurationLabel = (TextView) findViewById(R.id.songTotalDurationLabel);
-        songTitleLabel = (TextView) findViewById(R.id.songTitle);
+        songCurrentDurationLabel = findViewById(R.id.songCurrentDurationLabel);
+        songTotalDurationLabel = findViewById(R.id.songTotalDurationLabel);
+        songTitleLabel = findViewById(R.id.songTitle);
         // Listeners
         songProgressBar.setOnSeekBarChangeListener(this); // Important
 
@@ -93,32 +85,24 @@ public class PlayerActivity extends Activity implements
     protected void onResume() {
         super.onResume();
         currentParashPosition = myApplication.getCurrentParashaPosition();
-        numberOfTracks = myApplication.parahsot.get(currentParashPosition).totalTracks;
+        numberOfTracks = myApplication.getParahsot().get(currentParashPosition).totalTracks;
         if (mNotificationManager != null)
             mNotificationManager.cancel(1);
         // for update the file about the last data of playing state
         // we trying to play from last point for user
         fileExist = getIntent().getBooleanExtra(EXTRA_FILE_IN_DEVICE, false);
-
-
-        playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.START_PLAY);
+        playingIntent.putExtra(PlayingServiceNew.EXTRA_COMMAND, PlayingServiceNew.START_PLAY);
+        playingIntent.putExtra(PlayingServiceNew.EXTRA_PAR_POSITION, currentParashPosition);
+        playingIntent.putExtra(PlayingServiceNew.EXTRA_CURRENT_TRACK, 0);
+        playingIntent.putExtra(PlayingServiceNew.EXTRA_TOTAL_TRACKS, numberOfTracks);
         if (PlayingServiceNew.playing) {
             if (getIntent().getBooleanExtra(EXTRA_LAUNCH, false)) {
                 if (fileExist) {
-                    //currentTrack = getIntent().getIntExtra(EXTRA_COUNT, 1);
-                    //playingIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
                 }
-                //playingIntent.putExtra(EXTRA_PATH, myApplication.parahsot.get(currentParashPosition).paths.get(currentTrack - 1));
                 startService(playingIntent);
                 loadClip();
             }
         } else {
-            if (fileExist) {
-                //currentTrack = myPref.getInt(EXTRA_TRACK, 1);
-                //playingIntent.putExtra(EXTRA_CURRENT, getIntent().getLongExtra(EXTRA_CURRENT, 0));
-            }
-            //playingIntent.putExtra(EXTRA_PATH, myApplication.parahsot.get(currentParashPosition).paths.get(currentTrack - 1));
-            //playingIntent.putExtra(EXTRA_CURRENT, (long) 0);
             startService(playingIntent);
             loadClip();
         }
@@ -156,24 +140,9 @@ public class PlayerActivity extends Activity implements
             NotificationHelper.postNotification(getApplicationContext(), 1,
                     R.drawable.ic_menu_play_clip,
                     getResources().getString(R.string.app_name),
-                    getResources().getString(R.string.playing_parashat) + " " + myApplication.parahsot.get(currentParashPosition).label,
+                    getResources().getString(R.string.playing_parashat) + " " + myApplication.getParahsot().get(currentParashPosition).label,
                     resultPendingIntent,
                     true);
-//            NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
-//                    this)
-//                    .setSmallIcon(R.drawable.ic_menu_play_clip)
-//                    .setContentTitle(
-//                            getResources().getString(R.string.app_name))
-//                    .setContentText(
-//                            getResources().getString(R.string.playing_parashat)
-//                                    + " " + myApplication.parahsot.get(currentParashPosition).label)
-//                    .setAutoCancel(true);
-//
-//
-//            mBuilder.setContentIntent(resultPendingIntent);
-//            mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-//            // mId allows you to update the notification later on.
-//            mNotificationManager.notify(1, mBuilder.build());
         }
     }
 
@@ -186,11 +155,12 @@ public class PlayerActivity extends Activity implements
         songProgressBar.removeCallbacks(updatePlayerTime);
     }
 
+    @SuppressLint("SetTextI18n")
     private void loadClip() {
         // set Progress bar values
         songProgressBar.setProgress(0);
-        songTitleLabel.setText(myApplication.parahsot.get(currentParashPosition).label + " " + (currentTrack + 1) + "/" +
-                myApplication.parahsot.get(currentParashPosition).totalTracks);
+        songTitleLabel.setText(myApplication.getParahsot().get(currentParashPosition).label + " " + (currentTrack + 1) + "/" +
+                myApplication.getParahsot().get(currentParashPosition).totalTracks);
     }
 
     @Override
@@ -201,7 +171,7 @@ public class PlayerActivity extends Activity implements
             if (fileExist) {
 
             } else {
-                playingIntent.putExtra(PlayingServiceNew.COMMAND, 2);
+                playingIntent.putExtra(PlayingServiceNew.EXTRA_COMMAND, 2);
                 startService(playingIntent);
             }
             finish();
@@ -227,7 +197,7 @@ public class PlayerActivity extends Activity implements
         int currentPosition = Utilities.progressToTimer(seekBar.getProgress(), PlayingServiceNew.totalDuration);
         playingIntent.putExtra("MOVE_TO", currentPosition);
         playingIntent.putExtra("ABS_VALUE", true);
-        playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.SEEK_TO);
+        playingIntent.putExtra(PlayingServiceNew.EXTRA_COMMAND, PlayingServiceNew.SEEK_TO);
         startService(playingIntent);
         progressIsDragging = false;
     }
@@ -238,14 +208,15 @@ public class PlayerActivity extends Activity implements
             currentTrack = 0;
             playingIntent.putExtra("MOVE_TO", 0);
             playingIntent.putExtra("ABS_VALUE", true);
-            playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.SEEK_TO);
+            playingIntent.putExtra(PlayingServiceNew.EXTRA_COMMAND, PlayingServiceNew.SEEK_TO);
             startService(playingIntent);
         } else if (!(currentTrack < numberOfTracks)) { // next pressed when playing last track
             currentTrack = numberOfTracks - 1;
         } else {
             if (!fileExist)
                 Toast.makeText(this, getResources().getString(R.string.begin_playing), Toast.LENGTH_SHORT).show();
-            playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.START_PLAY);
+            playingIntent.putExtra(PlayingServiceNew.EXTRA_COMMAND, PlayingServiceNew.START_PLAY);
+            playingIntent.putExtra(PlayingServiceNew.EXTRA_CURRENT_TRACK, currentTrack);
             startService(playingIntent);
             loadClip();
         }
@@ -260,7 +231,7 @@ public class PlayerActivity extends Activity implements
                     play.setImageResource(R.drawable.btn_play);
                 else
                     play.setImageResource(R.drawable.btn_pause);
-                playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.PLAY_PRESSED);
+                playingIntent.putExtra(PlayingServiceNew.EXTRA_COMMAND, PlayingServiceNew.PLAY_PRESSED);
                 startService(playingIntent);
                 break;
             case R.id.btnNext:
@@ -272,13 +243,13 @@ public class PlayerActivity extends Activity implements
             case R.id.btnForward:
                 playingIntent.putExtra("MOVE_TO", 10000);
                 playingIntent.putExtra("ABS_VALUE", false);
-                playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.SEEK_TO);
+                playingIntent.putExtra(PlayingServiceNew.EXTRA_COMMAND, PlayingServiceNew.SEEK_TO);
                 startService(playingIntent);
                 break;
             case R.id.btnBackward:
                 playingIntent.putExtra("MOVE_TO", -10000);
                 playingIntent.putExtra("ABS_VALUE", false);
-                playingIntent.putExtra(PlayingServiceNew.COMMAND, PlayingServiceNew.SEEK_TO);
+                playingIntent.putExtra(PlayingServiceNew.EXTRA_COMMAND, PlayingServiceNew.SEEK_TO);
                 startService(playingIntent);
                 break;
         }
@@ -297,17 +268,19 @@ public class PlayerActivity extends Activity implements
     }
 
     Runnable updatePlayerChapter = new Runnable() {
+        @SuppressLint("SetTextI18n")
         @Override
         public void run() {
             play.setImageResource(R.drawable.btn_pause);
-            songTitleLabel.setText(myApplication.parahsot.get(currentParashPosition).label + " " + (currentTrack + 1)
-                    + "/" + myApplication.parahsot.get(currentParashPosition).totalTracks);
+            songTitleLabel.setText(myApplication.getParahsot().get(currentParashPosition).label + " " + (currentTrack + 1)
+                    + "/" + myApplication.getParahsot().get(currentParashPosition).totalTracks);
             songTotalDurationLabel.setText("" + Utilities.milliSecondsToTimer((long) PlayingServiceNew.totalDuration));
         }
     };
 
     private boolean progressIsDragging;
     Runnable updatePlayerTime = new Runnable() {
+        @SuppressLint("SetTextI18n")
         @Override
         public void run() {
             if (!progressIsDragging) {

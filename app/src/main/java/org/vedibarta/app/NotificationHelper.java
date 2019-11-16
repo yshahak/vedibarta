@@ -10,20 +10,21 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
-public class NotificationHelper {
+class NotificationHelper {
 
-    public static final String CHANNEL_ID = "42";
+    static final String CHANNEL_ID = "42";
 
     /**
      * call this from app on create
      */
-    public static void createNotificationChannel(Context context) {
+    static void createNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "vedibarta";
             String description = "Vedibarta application";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
             channel.setDescription(description);
+            channel.setSound(null, null);
             // Register the channel with the system; you can't change the importance
             // or other notification behaviors after this
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
@@ -33,8 +34,8 @@ public class NotificationHelper {
         }
     }
 
-    public static void postNotification(Context context, int notificationId, @DrawableRes int notificationIcon, String title, String content, @Nullable PendingIntent pendingIntent,
-                                        boolean autoCancel) {
+    static void postNotification(Context context, int notificationId, @DrawableRes int notificationIcon, String title, String content, @Nullable PendingIntent pendingIntent,
+                                 boolean autoCancel) {
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         // notificationId is a unique int for each notification that you must define
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)

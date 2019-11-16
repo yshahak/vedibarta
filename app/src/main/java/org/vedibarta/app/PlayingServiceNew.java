@@ -1,11 +1,9 @@
 package org.vedibarta.app;
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
@@ -13,48 +11,48 @@ import android.media.MediaPlayer.OnCompletionListener;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
-import android.widget.RemoteViews;
+import android.util.Log;
 
-//import com.splunk.mint.Mint;
 
 public class PlayingServiceNew extends Service implements MediaPlayer.OnPreparedListener, OnCompletionListener, OnAudioFocusChangeListener {
-    Context ctx;
-    MyApplication myApplication;
+
+    private static final String TAG = "PlayingServiceNew";
+    @SuppressWarnings("FieldCanBeLocal")
+    private String BASE_AUDIO_PATH = "http://www.vedibarta.org/Rashi_Tora_MP3/";
+
+    private MyApplication myApplication;
     public final static int START_PLAY = 0, PLAY_PRESSED = 1, SEEK_TO = 5, ACTIVITY_STOP = 8
             , ACTIVTY_RESUME = 9, ACTIVIY_DESTROY = 10, END_PLAY = 11, NOTIFICATION_STOP = 12;
     public static int currentDuration, totalDuration;
 
-    public final static String COMMAND = "command";
+    public final static String EXTRA_COMMAND = "extra_command";
+    public final static String EXTRA_PAR_POSITION = "extra_par_position";
+    public final static String EXTRA_CURRENT_TRACK = "extra_current_track";
+    public final static String EXTRA_TOTAL_TRACKS = "extra_total_tracks";
     public final static String LAST_PLAY_TRACK = "last_play_chapter";
     public static boolean playing;
+    private int currentParashPosition, currentTrack, totalTracks;
     private boolean wasPlay;
-    public MediaPlayer mp;
-    public Handler mHandler;
-    private RemoteViews contentView;
-    public NotificationManager manager;
-    TelephonyManager telephonyManager;
-    PhoneStateListener listener;
-    AudioManager am;
-    SharedPreferences pref;
-    private Notification notification;
+
+    private MediaPlayer mp;
+    private Handler mHandler;
+    private NotificationManager manager;
+    private AudioManager am;
 
     @Override
     public void onCreate() {
-        ctx = this;
         myApplication = (MyApplication) getApplication();
         myApplication.setPlayingService(this);
         mHandler = new Handler();
         manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        pref = PreferenceManager.getDefaultSharedPreferences(myApplication);
         am = (AudioManager) getApplication().getSystemService(Context.AUDIO_SERVICE);
 
 
-        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         // Create a new PhoneStateListener
-        listener = new PhoneStateListener() {
+        PhoneStateListener listener = new PhoneStateListener() {
             @Override
             public void onCallStateChanged(int state, String incomingNumber) {
                 switch (state) {
@@ -83,10 +81,13 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
         if (intent != null) {
-            int command = intent.getIntExtra(COMMAND, -1);
+            int command = intent.getIntExtra(EXTRA_COMMAND, -1);
             switch (command) {
                 case START_PLAY:
-                    makePlaying(myApplication.parahsot.get(PlayerActivity.currentParashPosition).paths.get(PlayerActivity.currentTrack));
+                    currentParashPosition = intent.getIntExtra(EXTRA_PAR_POSITION, -1);
+                    currentTrack = intent.getIntExtra(EXTRA_CURRENT_TRACK, -1);
+                    totalTracks = intent.getIntExtra(EXTRA_TOTAL_TRACKS, -1);
+                    makePlaying(currentParashPosition, currentTrack, totalTracks);
                     break;
                 case PLAY_PRESSED:
                     if (mp.isPlaying())
@@ -161,15 +162,21 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
         mHandler.postDelayed(checkServiceInactiveInterval, 1000 * 60 * 10);
     }
 
-    public void makePlaying(String path) {
+    public void makePlaying(int parashIndex, int currentTrack, int totalTracks) {
         try {
             mHandler.removeCallbacks(mUpdateTimeTask);
-            if (PlayerActivity.currentTrack <= PlayerActivity.numberOfTracks) {
+            if (currentTrack <= totalTracks) {
                 int result = am
                         .requestAudioFocus(this,
                                 AudioManager.STREAM_MUSIC,
                                 AudioManager.AUDIOFOCUS_GAIN);
                 if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                    String relativePath = ParashotData.getRelativePath(parashIndex, currentTrack);
+                    String path = Utilities.isLocalFileExists(getApplicationContext(), relativePath);
+                    if (path == null) {
+                        path = BASE_AUDIO_PATH + relativePath;
+                    }
+                    Log.d(TAG, "playing track:" + path);
                     if (mp == null) {
                         mp = initializeMP();
                     }
@@ -192,7 +199,6 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
             mp.start();
             playing = true;
         }
-        updateNotification();
         mHandler.removeCallbacks(checkServiceInactiveInterval);
 
     }
@@ -202,15 +208,14 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
         if (mp.isPlaying()) {
             mp.pause();
         }
-        updateNotification();
         saveCurrentPlayingData();
         mHandler.postDelayed(checkServiceInactiveInterval, 1000 * 60 * 10);
 
     }
 
     private void saveCurrentPlayingData() {
-        Parasha parasha = myApplication.parahsot.get(PlayerActivity.currentParashPosition);
-        parasha.lastPlayedTrack = PlayerActivity.currentTrack;
+        Parasha parasha = myApplication.getParahsot().get(currentParashPosition);
+        parasha.lastPlayedTrack = currentTrack;
         parasha.lastPlayedPosition = currentDuration;
     }
 
@@ -258,11 +263,11 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        if (PlayerActivity.currentTrack == PlayerActivity.numberOfTracks - 1)
+        if (currentTrack == totalTracks - 1)
             endPlay();
         else {
-            PlayerActivity.currentTrack++;
-            makePlaying(myApplication.parahsot.get(PlayerActivity.currentParashPosition).paths.get(PlayerActivity.currentTrack));
+            currentTrack++;
+            makePlaying(currentParashPosition, currentTrack, totalTracks);
         }
     }
 
@@ -271,7 +276,6 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
         totalDuration = mp.getDuration();
         mp.start();
         playing = true;
-        updateNotification();
         PlayerActivity activity = myApplication.getPlayerActivity();
         if (activity != null) {
             updateCurrentTime();
@@ -307,25 +311,6 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
         }
     };
 
-    public void updateNotification() {
-        /*if (contentView == null) {
-            contentView = new RemoteViews(getPackageName(), R.layout.notification_control);
-            setListeners(contentView);
-            NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(ctx)
-                    .setContent(contentView)
-                    .setSmallIcon(android.R.drawable.ic_media_play)
-                    .setPriority(Notification.PRIORITY_HIGH);
-            notification = mBuilder.build();
-        }
-        contentView.setTextViewText(R.id.text, "תהלים " + chapters[PlayingService.currentChapter - 1] + "'");
-        if (playing)
-            contentView.setImageViewResource(R.id.pause, android.R.drawable.ic_media_pause);
-        else
-            contentView.setImageViewResource(R.id.pause, android.R.drawable.ic_media_play);
-        startForeground(1, notification);*/
-
-        //manager.notify(0, notification);
-    }
 
     @Override
     public IBinder onBind(Intent intent) {

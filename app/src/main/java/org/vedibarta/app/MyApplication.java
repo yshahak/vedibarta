@@ -11,17 +11,13 @@ import java.util.ArrayList;
  * Created by yshahak on 07/01/2015.
  */
 public class MyApplication extends Application {
-    private static final String EXTRA_SAVED_DATA = "savedData";
     //Tracker tracker;
 
     private final String TAG = getClass().getSimpleName();
 
     PlayerActivity playerActivity;
-    SplashActivity splashActivity;
-    DownloadService downloadService;
     PlayingServiceNew playingService;
-    final String MINT_TAG = "";
-    ArrayList<Parasha> parahsot;
+    private ArrayList<Parasha> parahsot;
 
 
     private int currentParashaPosition;
@@ -31,12 +27,7 @@ public class MyApplication extends Application {
     @Override
     public void onCreate(){
         super.onCreate();
-        String data = PreferenceManager.getDefaultSharedPreferences(this).getString(EXTRA_SAVED_DATA, "null");
-        if ("null".equals(data)){
-            new Thread(setData).start();
-        }else {
-
-        }
+        new Thread(setData).start();
         NotificationHelper.createNotificationChannel(this);
         //Mint.initAndStartSession(this, MINT_TAG);
     }
@@ -49,20 +40,8 @@ public class MyApplication extends Application {
         return currentParashaPosition;
     }
 
-    public void setDownloadService(DownloadService service){
-        downloadService = service;
-    }
-
-    public DownloadService getDownloadService(){
-        return downloadService;
-    }
-
     public void setPlayingService(PlayingServiceNew service){
         playingService = service;
-    }
-
-    public PlayingServiceNew getPlayingService(){
-        return playingService;
     }
 
     public void setPlayerActivity(PlayerActivity activity){
@@ -72,19 +51,16 @@ public class MyApplication extends Application {
     public PlayerActivity getPlayerActivity(){
         return playerActivity;
     }
-    public void setSplashActivity(SplashActivity activity){
-        splashActivity = activity;
-    }
 
-    public SplashActivity getSplashActivity(){
-        return splashActivity;
-    }
 
+    public ArrayList<Parasha> getParahsot() {
+        return parahsot;
+    }
 
     Runnable setData = new Runnable() {
         @Override
         public void run() {
-            parahsot = new ArrayList<Parasha>();
+            parahsot = new ArrayList<>();
             int size = ParashotData.parashot.length;
             for (int i = 0 ; i < size; i++){
                 String name = ParashotData.getParashaHeb(i);
@@ -97,13 +73,5 @@ public class MyApplication extends Application {
             }
         }
     };
-
-   /* public synchronized Tracker getTracker() {
-        if (tracker == null) {
-            GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
-            tracker =  analytics.newTracker(R.xml.app_tracker);
-        }
-        return tracker;
-    }*/
 
 }
