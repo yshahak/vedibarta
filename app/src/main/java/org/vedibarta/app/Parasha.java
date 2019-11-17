@@ -8,17 +8,16 @@ import java.util.ArrayList;
 /**
  * Created by yshahak on 20/07/2015.
  */
-public class Parasha implements Parcelable{
+public class Parasha implements Parcelable {
     String label;
     int totalTracks;
     int lastPlayedTrack;
     int lastPlayedPosition;
-    ArrayList<String> paths;
-    boolean downloaded;
+    private ArrayList<String> paths;
+    private boolean downloaded;
 
 
     /**
-     *
      * Constructor to use when re-constructing object
      * from a parcel
      *
@@ -51,7 +50,6 @@ public class Parasha implements Parcelable{
     }
 
     /**
-     *
      * Called from the constructor to create this
      * object from a parcel.
      *
@@ -72,17 +70,15 @@ public class Parasha implements Parcelable{
     }
 
     /**
-     *
      * This field is needed for Android to be able to
      * create new objects, individually or as arrays.
-     *
+     * <p>
      * This also means that you can use use the default
      * constructor to create the object and use another
      * method to hyrdate it as necessary.
-     *
+     * <p>
      * I just find it easier to use the constructor.
      * It makes sense for the way my brain thinks ;-)
-     *
      */
     public static final Parcelable.Creator CREATOR =
             new Parcelable.Creator() {

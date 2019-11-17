@@ -26,12 +26,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@SuppressWarnings("ResultOfMethodCallIgnored")
 public class FragmentHoradot extends ListFragment {
 
 	private long freeSD = 0;
 	private ArrayList<String> existParashotList = new ArrayList<>();
-	private ArrayList<String> downloadedParsIndexes = new ArrayList<>();
+	private ArrayList<Integer> downloadedParsIndexes;
 	private CustomArray adapter;
 
 
@@ -102,10 +101,10 @@ public class FragmentHoradot extends ListFragment {
 		existParashotList.clear();
 		final Context activity = getActivity();
 		if (activity != null) {
-			downloadedParsIndexes = Utilities.readFromFile(activity);
+			downloadedParsIndexes = ParashotData.getDownloadedParsIndexes(activity);
 			if (downloadedParsIndexes.size() > 0) {
 				for (int i = 0; i < downloadedParsIndexes.size(); i++) {
-					existParashotList.add(i, ParashotData.getParashaHeb(Integer.valueOf(downloadedParsIndexes.get(i))));
+					existParashotList.add(i, ParashotData.getParashaHeb(downloadedParsIndexes.get(i)));
 				}
 			}
 		}
@@ -121,36 +120,13 @@ public class FragmentHoradot extends ListFragment {
 	private void playParasha(int position){
 		final FragmentActivity activity = getActivity();
 		if (activity != null) {
-			((OnStartPlayClicked) activity).onStartPlayClicked(Integer.parseInt(downloadedParsIndexes.get(position)));
+			((OnStartPlayClicked) activity).onStartPlayClicked(downloadedParsIndexes.get(position));
 		}
 	}
 
 	private void deleteParasha(int position){
-		String relativePath = ParashotData.getRelativePath(Integer.parseInt(downloadedParsIndexes.get(position)), 0);
+		String relativePath = ParashotData.getRelativePath(downloadedParsIndexes.get(position), 0);
 		Utilities.deleteParasha(getContext(), relativePath);
-//		File mydirIn;
-//		File mydirEx;
-//		mydirEx = new File(getActivity()
-//				.getExternalFilesDir(null)
-//				+ File.separator + "AudioFiles",
-//				downloadedParsIndexes.get(position));
-//		mydirIn = new File(getActivity().getFilesDir()
-//				+ File.separator + "AudioFiles",
-//				downloadedParsIndexes.get(position));
-//		if (mydirIn.isDirectory()) {
-//			String[] children = mydirIn.list();
-//			for (String child : children) {
-//				new File(mydirIn, child).delete();
-//			}
-//		}
-//		if (mydirEx.isDirectory()) {
-//			String[] children = mydirEx.list();
-//			for (String child : children) {
-//				new File(mydirEx, child).delete();
-//			}
-//		}
-//		mydirIn.delete();
-//		mydirEx.delete();
 		try {
 			Utilities.updateLine(getActivity(), position);
 		} catch (IOException e) {

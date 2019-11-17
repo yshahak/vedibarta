@@ -1,6 +1,11 @@
 package org.vedibarta.app;
 
-public class ParashotData {
+import android.content.Context;
+
+import java.util.ArrayList;
+
+class ParashotData {
+
 	private ParashotData() {
 
 	}
@@ -475,11 +480,15 @@ public class ParashotData {
 		return  tracks / 3;
 	}
 
-	public static String getParashaHeb(int position){
+	static String getParashaHeb(int position){
 		return parashot[position];
 	}
 	
-	public static String[] getParashotList() {
+	static String[] getParashotList() {
 		return parashot;
+	}
+
+	static ArrayList<Integer> getDownloadedParsIndexes(Context context) {
+		return Utilities.readFromFile(context);
 	}
 }

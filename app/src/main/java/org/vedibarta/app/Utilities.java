@@ -184,8 +184,8 @@ public class Utilities {
         }
     }
 
-    static ArrayList<String> readFromFile(Context ctx) {
-        ArrayList<String> ret = new ArrayList<>();
+    static ArrayList<Integer> readFromFile(Context ctx) {
+        ArrayList<Integer> ret = new ArrayList<>();
         File TEXTFILES = new File(ctx.getFilesDir(), "TEXTFILES");
         File file;
         file = new File(TEXTFILES, FILE_NUMBERS);
@@ -197,7 +197,7 @@ public class Utilities {
                 String receiveString;
                 // StringBuilder stringBuilder = new StringBuilder();
                 while ((receiveString = bufferedReader.readLine()) != null) {
-                    ret.add(receiveString);
+                    ret.add(Integer.parseInt(receiveString));
                     // stringBuilder.append(receiveString);
                 }
                 bufferedReader.close();

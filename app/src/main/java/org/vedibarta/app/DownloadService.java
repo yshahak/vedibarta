@@ -90,12 +90,12 @@ public class DownloadService extends IntentService {
                     fos.close();
                     downloadCounter++;
                 } else {
-                    Log.e(TAG, "there was an issue with the download:" + path);
+                    Log.e(TAG, "there was an issue with the downloadBtn:" + path);
                     break;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                Log.e(TAG, "there was an issue with the download:" + path);
+                Log.e(TAG, "there was an issue with the downloadBtn:" + path);
                 break;
 //                Mint.logException(e);
             }

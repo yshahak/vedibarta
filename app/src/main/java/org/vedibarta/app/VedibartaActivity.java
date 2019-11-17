@@ -197,10 +197,12 @@ public class VedibartaActivity extends AppCompatActivity implements OnStartPlayC
                     if (mNotifyManager != null)
                         mNotifyManager.cancel(0);
                 }
-//                if (hideProgressWindow){
-                    mProgress.setProgress(0);
-                    mProgress.dismiss();
-//                }
+                mProgress.setProgress(0);
+                mProgress.dismiss();
+                final Fragment parashot = getSupportFragmentManager().findFragmentByTag("parashot");
+                if (parashot instanceof FragmentParashot) {
+                    ((FragmentParashot) parashot).refreshList();
+                }
                 break;
         }
     }
