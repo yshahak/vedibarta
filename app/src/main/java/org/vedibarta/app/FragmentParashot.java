@@ -23,7 +23,8 @@ public class FragmentParashot extends ListFragment {
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         downloadedParsIndexes = ParashotData.getDownloadedParsIndexes(getContext());
-        View rootView = inflater.inflate(R.layout.list, container, false);
+        ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.list, container, false);
+        ((VedibartaActivity) getActivity()).addBtnToPlayerActivityIfNeeded(rootView);
         adapter = new CustomArray(getActivity(), R.layout.row_parasot, R.id.label, ParashotData.getParashotList());
         setListAdapter(adapter);
         TextView mTextView = rootView.findViewById(R.id.memory);

@@ -45,8 +45,11 @@
     <string name="mailAdress">Mail address(will not be shown)</string>
     <string name="insert_comment">Insert your comment</string>
     <string name="Kishur_vedibarta">Direct link to official site</string>
-    
-    
-    
+    <string name="should_restore">Should restore last session?</string>
+    <string name="should_restore_yes">yes</string>
+    <string name="should_restore_no">no</string>
+
+
+
 
 </resources>

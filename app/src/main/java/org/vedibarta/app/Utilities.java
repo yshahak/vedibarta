@@ -3,8 +3,11 @@ package org.vedibarta.app;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
@@ -21,6 +24,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
+
+import static org.vedibarta.app.PlayerActivity.EXTRA_LAUNCH;
+import static org.vedibarta.app.PlayingServiceNew.LAST_SESSION;
 
 
 public class Utilities {
@@ -238,14 +245,32 @@ public class Utilities {
         }
     }
 
-    //Check if service is running
-    static boolean isMyServiceRunning(Context ctx) {
-        ActivityManager manager = (ActivityManager) ctx.getSystemService(Context.ACTIVITY_SERVICE);
-        for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (PlayingServiceNew.class.getName().equals(service.service.getClassName())) {
-                return true;
+    @Nullable
+    static Intent getRestoreSessionIntent(Context context){
+        SharedPreferences pres = PreferenceManager.getDefaultSharedPreferences(context);
+        String lastSession = pres.getString(LAST_SESSION, null);
+        if (lastSession != null) {
+            String[] dataArr = lastSession.split("\\|");
+            long lastSessionTime = Long.parseLong(dataArr[3]);
+            if (TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastSessionTime) < 7){
+                final Intent intent = new Intent(context, PlayerActivity.class);
+                MyApplication.instance.setCurrentParashaPosition(Integer.parseInt(dataArr[0]));
+                intent.putExtra(PlayingServiceNew.EXTRA_CURRENT_TRACK, Integer.parseInt(dataArr[1]));
+                long currentPosition = Long.parseLong(dataArr[2]);
+                //todo restore it as well
+                intent.putExtra(EXTRA_LAUNCH, true);
+                return intent;
+            } else {
+                pres.edit().putString(LAST_SESSION, null).apply();
             }
         }
-        return false;
+        return null;
+    }
+
+
+    //Check if service is running
+    static boolean isPlaying() {
+        final PlayingSession playingSession = MyApplication.instance.getPlayingSession();
+        return playingSession != null && playingSession.isPlaying;
     }
 }

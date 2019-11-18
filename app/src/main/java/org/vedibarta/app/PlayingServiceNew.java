@@ -4,6 +4,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
@@ -11,6 +12,7 @@ import android.media.MediaPlayer.OnCompletionListener;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -22,18 +24,28 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
     @SuppressWarnings("FieldCanBeLocal")
     private String BASE_AUDIO_PATH = "http://www.vedibarta.org/Rashi_Tora_MP3/";
 
-    private MyApplication myApplication;
-    public final static int START_PLAY = 0, PLAY_PRESSED = 1, SEEK_TO = 5, ACTIVITY_STOP = 8
-            , ACTIVTY_RESUME = 9, ACTIVIY_DESTROY = 10, END_PLAY = 11, NOTIFICATION_STOP = 12;
-    public static int currentDuration, totalDuration;
+    public final static int START_PLAY = 0;
+    public final static int PLAY_PRESSED = 1;
+    public final static int NEXT_PRESSED = 2;
+    public final static int PREVIOUS_PRESSED = 3;
+    public final static int SEEK_TO = 5;
+    public final static int ACTIVITY_STOP = 8;
+    public final static int ACTIVTY_RESUME = 9;
+    public final static int ACTIVIY_DESTROY = 10;
+    public final static int END_PLAY = 11;
+    public final static int NOTIFICATION_STOP = 12;
 
     public final static String EXTRA_COMMAND = "extra_command";
     public final static String EXTRA_PAR_POSITION = "extra_par_position";
     public final static String EXTRA_CURRENT_TRACK = "extra_current_track";
     public final static String EXTRA_TOTAL_TRACKS = "extra_total_tracks";
-    public final static String LAST_PLAY_TRACK = "last_play_chapter";
-    public static boolean playing;
-    private int currentParashPosition, currentTrack, totalTracks;
+    public final static String LAST_SESSION = "last_session";
+
+//    public static boolean playing;
+//    public static int currentDuration, totalDuration;
+//    private static int currentParashPosition, currentTrack, totalTracks;
+    private MyApplication myApplication;
+    private SharedPreferences prefs;
     private boolean wasPlay;
 
     private MediaPlayer mp;
@@ -44,11 +56,10 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
     @Override
     public void onCreate() {
         myApplication = (MyApplication) getApplication();
-        myApplication.setPlayingService(this);
         mHandler = new Handler();
         manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         am = (AudioManager) getApplication().getSystemService(Context.AUDIO_SERVICE);
-
+        prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
         TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         // Create a new PhoneStateListener
@@ -84,18 +95,24 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
             int command = intent.getIntExtra(EXTRA_COMMAND, -1);
             switch (command) {
                 case START_PLAY:
-                    currentParashPosition = intent.getIntExtra(EXTRA_PAR_POSITION, -1);
-                    currentTrack = intent.getIntExtra(EXTRA_CURRENT_TRACK, -1);
-                    totalTracks = intent.getIntExtra(EXTRA_TOTAL_TRACKS, -1);
-                    makePlaying(currentParashPosition, currentTrack, totalTracks);
+                    int currentParashPosition = intent.getIntExtra(EXTRA_PAR_POSITION, -1);
+                    int currentTrack = intent.getIntExtra(EXTRA_CURRENT_TRACK, -1);
+                    int totalTracks = intent.getIntExtra(EXTRA_TOTAL_TRACKS, -1);
+                    myApplication.setPlayingSession(new PlayingSession(currentParashPosition, currentTrack, totalTracks));
+                    makePlaying();
                     break;
                 case PLAY_PRESSED:
                     if (mp.isPlaying())
                         pausePlay();
                     else {
                         resumePlay();
-                        updateCurrentTime();
                     }
+                    break;
+                case NEXT_PRESSED:
+                    nextTrack();
+                    break;
+                case PREVIOUS_PRESSED:
+                    previewsTrack();
                     break;
                 case SEEK_TO:
                     int moveTo = intent.getIntExtra("MOVE_TO", 0);
@@ -107,19 +124,18 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
                     endPlay();
                     break;
                 case ACTIVITY_STOP:
-                    mHandler.removeCallbacks(mUpdateTimeTask);
+//                    mHandler.removeCallbacks(mUpdateTimeTask);
                     break;
                 case ACTIVTY_RESUME:
-                    if (mp.isPlaying()) {
-                        updateCurrentTime();
-                    }
+//                    if (mp.isPlaying()) {
+//                        updateCurrentTime();
+//                    }
                     break;
                 case ACTIVIY_DESTROY:
                     if (mp != null && !mp.isPlaying())
                         mHandler.postDelayed(checkServiceInactiveInterval, 1000 * 60 * 30);
                     break;
                 case NOTIFICATION_STOP:
-
                     break;
             }
         }
@@ -133,7 +149,6 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
             mp = null;
         }
         try {
-            myApplication.setPlayingService(null);
             mHandler.removeCallbacksAndMessages(null);
         } catch (NullPointerException e) {
             //Mint.logException(e);
@@ -154,24 +169,23 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
         if (mp.isPlaying()) {
             mp.stop();
         }
-        stopForeground(true);
-        mHandler.removeCallbacks(mUpdateTimeTask);
-        playing = false;
-        saveCurrentPlayingData();
+//        stopForeground(true);
+        myApplication.getPlayingSession().isPlaying = false;
         manager.cancelAll();
+        mHandler.removeCallbacks(mUpdateTimeTask);
         mHandler.postDelayed(checkServiceInactiveInterval, 1000 * 60 * 10);
     }
 
-    public void makePlaying(int parashIndex, int currentTrack, int totalTracks) {
+    public void makePlaying() {
         try {
             mHandler.removeCallbacks(mUpdateTimeTask);
-            if (currentTrack <= totalTracks) {
+            if (myApplication.getPlayingSession().currentTrack <= myApplication.getPlayingSession().totalTracks) {
                 int result = am
                         .requestAudioFocus(this,
                                 AudioManager.STREAM_MUSIC,
                                 AudioManager.AUDIOFOCUS_GAIN);
                 if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                    String relativePath = ParashotData.getRelativePath(parashIndex, currentTrack);
+                    String relativePath = ParashotData.getRelativePath(myApplication.getPlayingSession().currentParashPosition, myApplication.getPlayingSession().currentTrack);
                     String path = Utilities.isLocalFileExists(getApplicationContext(), relativePath);
                     if (path == null) {
                         path = BASE_AUDIO_PATH + relativePath;
@@ -197,26 +211,37 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
     private void resumePlay() {
         if (!mp.isPlaying()) {
             mp.start();
-            playing = true;
         }
+        myApplication.getPlayingSession().isPlaying = true;
         mHandler.removeCallbacks(checkServiceInactiveInterval);
-
+        updateCurrentTime();
     }
 
     private void pausePlay() {
-        playing = false;
+        myApplication.getPlayingSession().isPlaying = false;
         if (mp.isPlaying()) {
             mp.pause();
         }
-        saveCurrentPlayingData();
+        saveCurrentSessionState();
         mHandler.postDelayed(checkServiceInactiveInterval, 1000 * 60 * 10);
-
+        mHandler.removeCallbacks(mUpdateTimeTask);
     }
 
-    private void saveCurrentPlayingData() {
-        Parasha parasha = myApplication.getParahsot().get(currentParashPosition);
-        parasha.lastPlayedTrack = currentTrack;
-        parasha.lastPlayedPosition = currentDuration;
+    private void nextTrack(){
+        if (myApplication.getPlayingSession().currentTrack == myApplication.getPlayingSession().totalTracks - 1) {
+            clearCurrentSessionState();
+            endPlay();
+        } else {
+            myApplication.getPlayingSession().currentTrack++;
+            makePlaying();
+        }
+    }
+
+    private void previewsTrack(){
+        if (myApplication.getPlayingSession().currentTrack > 0) {
+            myApplication.getPlayingSession().currentTrack--;
+            makePlaying();
+        }
     }
 
     private void seekTo(int moveTo, boolean absValue) {
@@ -230,57 +255,57 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
         // check if seekBackward time is greater than 0 sec
         if (nextPosition < 0) {
             mp.seekTo(0);
-        } else if (nextPosition > totalDuration) {
-            /*currentChapter++;
-            makePlaying();*/
-            //TODO fix this logic
+        } else if (nextPosition > myApplication.getPlayingSession().totalDuration) {
+            nextTrack();
         } else
             mp.seekTo(nextPosition);
     }
 
+    private void saveCurrentSessionState() {
+        final PlayingSession playingSession = myApplication.getPlayingSession();
+
+        prefs.edit()
+                .putString(LAST_SESSION,
+                        "" + playingSession.currentParashPosition + "|" +
+                                playingSession.currentTrack + "|" +
+                                playingSession.currentDuration + "|" +
+                                System.currentTimeMillis())
+                .apply();
+    }
+
+    private void clearCurrentSessionState() {
+        prefs.edit()
+                .remove(LAST_SESSION)
+                .apply();
+    }
+
 
     public void updateCurrentTime() {
-        mHandler.postDelayed(mUpdateTimeTask, 100);//little delay so mp.isPlaying() will update
+        mHandler.removeCallbacks(mUpdateTimeTask);
+        mHandler.post(mUpdateTimeTask);
     }
 
     private Runnable mUpdateTimeTask = new Runnable() {
         public void run() {
             if (mp.isPlaying()) {
-                currentDuration = mp.getCurrentPosition();
-                /*PlayerActivity activity = myApplication.getPlayerActivity();
-                if (activity != null) {
-                    activity.updatePlayerInUIThread(false);
-                }*/
-                mHandler.postDelayed(this, 1000);
-            } else {
-                mHandler.removeCallbacks(mUpdateTimeTask);
+                myApplication.getPlayingSession().currentDuration = mp.getCurrentPosition();
             }
+            mHandler.postDelayed(this, 1000);
         }
     };
 
 
-
-
     @Override
     public void onCompletion(MediaPlayer mp) {
-        if (currentTrack == totalTracks - 1)
-            endPlay();
-        else {
-            currentTrack++;
-            makePlaying(currentParashPosition, currentTrack, totalTracks);
-        }
+        nextTrack();
     }
 
     @Override
     public void onPrepared(MediaPlayer mp) {
-        totalDuration = mp.getDuration();
+        myApplication.getPlayingSession().totalDuration = mp.getDuration();
+        myApplication.getPlayingSession().isPlaying = true;
         mp.start();
-        playing = true;
-        PlayerActivity activity = myApplication.getPlayerActivity();
-        if (activity != null) {
-            updateCurrentTime();
-            activity.updatePlayerInUIThread(true);
-        }
+        updateCurrentTime();
     }
 
     public void onAudioFocusChange(int focusChange) {
@@ -294,8 +319,7 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
             if (wasPlay)
                 resumePlay();
             wasPlay = false;
-        }
-        else {
+        } else {
             if (mp.isPlaying()) {
                 wasPlay = true;
                 pausePlay();

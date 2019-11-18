@@ -45,7 +45,10 @@
     <string name="mailAdress">כתובת מייל(לא תוצג)</string>
     <string name="insert_comment">הקלד את הערתך</string>
     <string name="Kishur_vedibarta">קישור ישיר לאתר "ודיברת"</string>
-    
+    <string name="should_restore">האם להמשיך מלימוד שהופסק?</string>
+    <string name="should_restore_yes">כן</string>
+    <string name="should_restore_no">לא</string>
+
     
 
 </resources>

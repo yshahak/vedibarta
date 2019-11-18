@@ -33,8 +33,10 @@ public class Fragmentfeedback extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View mainView = inflater.inflate(R.layout.feedback2, container,
+        ViewGroup mainView = (ViewGroup) inflater.inflate(R.layout.feedback2, container,
                 false);
+        ((VedibartaActivity) getActivity()).addBtnToPlayerActivityIfNeeded(mainView);
+
         EditTextName = mainView.findViewById(R.id.EditTextName);
         EditTextEmail = mainView.findViewById(R.id.EditTextEmail);
         EditTextFeedbackBody = mainView

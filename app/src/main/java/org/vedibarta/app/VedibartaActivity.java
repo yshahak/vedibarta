@@ -16,7 +16,12 @@ import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBar.Tab;
 import android.support.v7.app.ActionBar.TabListener;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.BufferedInputStream;
@@ -39,6 +44,7 @@ import static org.vedibarta.app.DownloadService.RESULT_CODE_PROGRESS;
 import static org.vedibarta.app.DownloadService.RESULT_CODE_START_DOWNLOAD;
 import static org.vedibarta.app.NotificationHelper.CHANNEL_ID;
 import static org.vedibarta.app.PlayerActivity.EXTRA_LAUNCH;
+import static org.vedibarta.app.PlayingServiceNew.LAST_SESSION;
 
 
 public class VedibartaActivity extends AppCompatActivity implements OnStartPlayClicked {
@@ -112,12 +118,53 @@ public class VedibartaActivity extends AppCompatActivity implements OnStartPlayC
             }
         };
         downloadReceiver = new WeakReference<>(resultReceiver);
+        final Intent restoreSessionIntent = Utilities.getRestoreSessionIntent(this);
+        if (restoreSessionIntent != null) {
+            AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+            dialog.setCancelable(true);
+            dialog.setTitle(getResources().getString(R.string.should_restore));
+            dialog.setPositiveButton(
+                    getResources().getString(R.string.should_restore_yes),
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivity(restoreSessionIntent);
+                            dialog.dismiss();
+                        }
+                    });
+            dialog.setNegativeButton(
+                    getResources().getString(R.string.should_restore_no),
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putString(LAST_SESSION, null).apply();
+                            dialog.dismiss();
+                        }
+                    });
+            dialog.show();
+        }
     }
 
     @Override
     public void onBackPressed() {
         moveTaskToBack(true);
 
+    }
+
+    public void addBtnToPlayerActivityIfNeeded(ViewGroup rootView){
+        if (Utilities.isPlaying()) {
+            Button myButton = new Button(this);
+            myButton.setText(R.string.backToPlayer);
+            myButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startActivity(new Intent(getBaseContext(), PlayerActivity.class));
+                }
+            });
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            myButton.setLayoutParams(params);
+            rootView.addView(myButton, 0, params);
+        }
     }
 
     public void startDownload(String item, int position) {
