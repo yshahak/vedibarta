@@ -14,6 +14,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class FragmentParashot extends ListFragment {
@@ -53,13 +54,13 @@ public class FragmentParashot extends ListFragment {
             ViewHolder(TextView label, View play, View downloadBtn) {
                 this.label = label;
                 this.play = play;
-                this.downloadBtn = downloadBtn;
+                this.downloadBtn = (ImageButton) downloadBtn;
             }
 
             int position;
             final TextView label;
             final View play;
-            final View downloadBtn;
+            final ImageButton downloadBtn;
         }
 
         @NonNull
@@ -75,6 +76,7 @@ public class FragmentParashot extends ListFragment {
                 convertView.setTag(viewHolder);
             } else
                 viewHolder = (ViewHolder) convertView.getTag();
+            viewHolder.downloadBtn.setImageResource(downloadedParsIndexes.contains(position) ? android.R.drawable.ic_menu_delete : R.drawable.stat_sys_download_anim1);
             viewHolder.label.setText(getItem(position));
             viewHolder.position = position;
             viewHolder.downloadBtn.setEnabled(!downloadedParsIndexes.contains(position));
@@ -95,19 +97,23 @@ public class FragmentParashot extends ListFragment {
                             ((OnStartPlayClicked) activity).onStartPlayClicked(position);
                             break;
                         case R.id.btn_download:
-                            Parasha parasha = ((MyApplication) activity.getApplication()).getParahsot().get(position);
-//                            if (parasha.downloaded) {
-//                                Toast.makeText(activity, R.string.alreadyDownloaded, Toast.LENGTH_LONG).show();
-//                                return;
-//                            }
-                            long memory = (activity.getFilesDir().getFreeSpace()) / 1048576;
-                            if ((memory > 300))
-                                ((VedibartaActivity) activity).startDownload(parasha.label, position);
-//                            else if ((activity.getExternalFilesDir(null).getFreeSpace() / 1048576) > 300) {
-//
-//                            }
-                            else
-                                Toast.makeText(activity, getString(R.string.full_memory), Toast.LENGTH_LONG).show();
+                            if (downloadedParsIndexes.contains(position)){
+                                String relativePath = ParashotData.getRelativePath(downloadedParsIndexes.get(position), 0);
+                                Utilities.deleteParasha(getContext(), relativePath);
+                                refreshList();
+                                try {
+                                    Utilities.updateLine(getActivity(), position);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                Parasha parasha = ((MyApplication) activity.getApplication()).getParahsot().get(position);
+                                long memory = (activity.getFilesDir().getFreeSpace()) / 1048576;
+                                if ((memory > 300))
+                                    ((VedibartaActivity) activity).startDownload(parasha.label, position);
+                                else
+                                    Toast.makeText(activity, getString(R.string.full_memory), Toast.LENGTH_LONG).show();
+                            }
                             break;
                     }
                 } else {

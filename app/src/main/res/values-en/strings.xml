@@ -48,6 +48,7 @@
     <string name="should_restore">Should restore last session?</string>
     <string name="should_restore_yes">yes</string>
     <string name="should_restore_no">no</string>
+    <string name="speed">speed:</string>
 
 
 

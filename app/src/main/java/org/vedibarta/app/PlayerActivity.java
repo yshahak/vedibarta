@@ -8,8 +8,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
@@ -28,9 +32,10 @@ public class PlayerActivity extends Activity implements SeekBar.OnSeekBarChangeL
     private MyApplication myApplication;
     private SeekBar songProgressBar;
     private boolean progressIsDragging;
-
+    private SharedPreferences prefs;
     static NotificationManager mNotificationManager;
-//    private int currentParashPosition, currentTrack, numberOfTracks;
+    private TextView speedLabel;
+    //    private int currentParashPosition, currentTrack, numberOfTracks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +58,7 @@ public class PlayerActivity extends Activity implements SeekBar.OnSeekBarChangeL
 
         // Supply the Intent & ServiceConnection that will use for the binding
         bindService(playingIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-
+        prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         play = findViewById(R.id.btnPlay);
         ImageButton next = findViewById(R.id.btnNext);
         ImageButton btnForward = findViewById(R.id.btnForward);
@@ -73,11 +78,21 @@ public class PlayerActivity extends Activity implements SeekBar.OnSeekBarChangeL
         btnForward.setOnClickListener(this);
         btnBackward.setOnClickListener(this);
 
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            findViewById(R.id.speed_container).setVisibility(View.GONE);
+        }
+        View btnSpeedUp = findViewById(R.id.btn_speed_up);
+        btnSpeedUp.setOnClickListener(this);
+        View btnSpeedDown = findViewById(R.id.btn_speed_down);
+        btnSpeedDown.setOnClickListener(this);
+        speedLabel = findViewById(R.id.speed_label);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        prefs.registerOnSharedPreferenceChangeListener(prefsListener);
+        setSpeedLabel();
         int currentParashPosition = myApplication.getCurrentParashaPosition();
         int numberOfTracks = myApplication.getParahsot().get(currentParashPosition).totalTracks;
         if (mNotificationManager != null)
@@ -91,11 +106,9 @@ public class PlayerActivity extends Activity implements SeekBar.OnSeekBarChangeL
         if (isPlaying()) {
             if (getIntent().getBooleanExtra(EXTRA_LAUNCH, false)) {
                 startService(playingIntent);
-//                loadClip();
             }
         } else {
             startService(playingIntent);
-//            loadClip();
         }
         setIntent(getIntent().putExtra(EXTRA_LAUNCH, false));
         runOnUiThread(updatePlayerState);
@@ -110,6 +123,7 @@ public class PlayerActivity extends Activity implements SeekBar.OnSeekBarChangeL
 
     public void onStop() {
         super.onStop();
+        prefs.unregisterOnSharedPreferenceChangeListener(prefsListener);
         play.removeCallbacks(updatePlayerState);
         // add notification if playing
         if (isPlaying()) {
@@ -137,24 +151,18 @@ public class PlayerActivity extends Activity implements SeekBar.OnSeekBarChangeL
 //        songProgressBar.removeCallbacks(updatePlayerTime);
     }
 
-//    @SuppressLint("SetTextI18n")
-//    private void loadClip() {
-//        // set Progress bar values
-//        songProgressBar.setProgress(0);
-//        songTitleLabel.setText(myApplication.getParahsot().get(myApplication.getPlayingSession().currentParashPosition).label + " " + (myApplication.getPlayingSession().currentTrack + 1) + "/" +
-//                myApplication.getParahsot().get(myApplication.getPlayingSession().currentParashPosition).totalTracks);
-//    }
+
+    @SuppressLint("SetTextI18n")
+    private void setSpeedLabel() {
+        speedLabel.setText(String.format(getString(R.string.speed) + "%.1f",  prefs.getFloat(PlayingServiceNew.EXTRA_SPEED, 1)));
+    }
 
     @Override
     public void onBackPressed() {
-        // super.onBackPressed();
 
         if (!isPlaying()) {
-//            playingIntent.putExtra(PlayingServiceNew.EXTRA_COMMAND, 2);
-//            startService(playingIntent);
             finish();
         }
-
         Intent backIntent = new Intent(this, VedibartaActivity.class);
         backIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         backIntent.putExtra("playing", isPlaying());
@@ -207,6 +215,15 @@ public class PlayerActivity extends Activity implements SeekBar.OnSeekBarChangeL
                 playingIntent.putExtra("ABS_VALUE", false);
                 playingIntent.putExtra(PlayingServiceNew.EXTRA_COMMAND, PlayingServiceNew.SEEK_TO);
                 break;
+            case R.id.btn_speed_up:
+                playingIntent.putExtra(PlayingServiceNew.EXTRA_COMMAND, PlayingServiceNew.CHANGE_SPEED);
+                playingIntent.putExtra(PlayingServiceNew.EXTRA_SPEED, true);
+                break;
+            case R.id.btn_speed_down:
+                playingIntent.putExtra(PlayingServiceNew.EXTRA_COMMAND, PlayingServiceNew.CHANGE_SPEED);
+                playingIntent.putExtra(PlayingServiceNew.EXTRA_SPEED, false);
+                break;
+
         }
         startService(playingIntent);
     }
@@ -238,42 +255,14 @@ public class PlayerActivity extends Activity implements SeekBar.OnSeekBarChangeL
         return playingSession != null && playingSession.isPlaying;
     }
 
-//
-//    /**
-//     * Update player data
-//     *
-//     * @param chapterChanged if <b>true</b>, update the new playing chapter, else update player time
-//     */
-//    public void updatePlayerInUIThread(boolean chapterChanged) {
-//        runOnUiThread(updatePlayerTime);
-//        if (chapterChanged) {
-//            runOnUiThread(updatePlayerChapter);
-//        }
-//    }
-//
-//    Runnable updatePlayerChapter = new Runnable() {
-//        @SuppressLint("SetTextI18n")
-//        @Override
-//        public void run() {
-//            play.setImageResource(R.drawable.btn_pause);
-//            songTitleLabel.setText(myApplication.getParahsot().get(myApplication.getPlayingSession().currentParashPosition).label + " " + (myApplication.getPlayingSession().currentTrack + 1)
-//                    + "/" + myApplication.getParahsot().get(myApplication.getPlayingSession().currentParashPosition).totalTracks);
-//            songTotalDurationLabel.setText("" + Utilities.milliSecondsToTimer((long) myApplication.getPlayingSession().totalDuration));
-//        }
-//    };
-//
-//    Runnable updatePlayerTime = new Runnable() {
-//        @SuppressLint("SetTextI18n")
-//        @Override
-//        public void run() {
-//            if (!progressIsDragging) {
-//                songCurrentDurationLabel.setText("" + Utilities.milliSecondsToTimer(myApplication.getPlayingSession().currentDuration));
-//                // Updating progress bar
-//                int progress = (Utilities.getProgressPercentage(myApplication.getPlayingSession().currentDuration, (long) myApplication.getPlayingSession().totalDuration));
-//                songProgressBar.setProgress(progress);
-//            }
-//            songProgressBar.postDelayed(this, 1000);
-//        }
-//    };
+    private SharedPreferences.OnSharedPreferenceChangeListener prefsListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            Log.d("SPEED", "speed has changed");
+            if (key.equals(PlayingServiceNew.EXTRA_SPEED)){
+                setSpeedLabel();
+            }
+        }
+    };
 
 }

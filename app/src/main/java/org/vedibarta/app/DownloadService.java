@@ -25,6 +25,7 @@ public class DownloadService extends IntentService {
     public static final int RESULT_CODE_START_DOWNLOAD = 3000;
     public static final int RESULT_CODE_PROGRESS = 8344;
     public static final int RESULT_CODE_FINISH = 9000;
+    public static final int RESULT_CODE_ERROR = -10;
 
     public static final String EXTRA_PAR_TITLE = "PARASHA";
     public static final String EXTRA_POSITION = "POSITION";
@@ -107,6 +108,11 @@ public class DownloadService extends IntentService {
             Utilities.writeToFile(dir.getPath() + ";" + "1" + ";" + "0", false, getApplication());
             if (receiver != null) {
                 receiver.send(RESULT_CODE_FINISH, resultData);
+            }
+        } else {
+            if (receiver != null) {
+                resultData.putString("error", "there was an issue with the download");
+                receiver.send(RESULT_CODE_ERROR, resultData);
             }
         }
 

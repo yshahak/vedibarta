@@ -9,6 +9,7 @@ import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -34,7 +35,9 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
     public final static int ACTIVIY_DESTROY = 10;
     public final static int END_PLAY = 11;
     public final static int NOTIFICATION_STOP = 12;
+    public final static int CHANGE_SPEED = 13;
 
+    public final static String EXTRA_SPEED = "EXTRA_PLAYING_SPEED";
     public final static String EXTRA_COMMAND = "extra_command";
     public final static String EXTRA_PAR_POSITION = "extra_par_position";
     public final static String EXTRA_CURRENT_TRACK = "extra_current_track";
@@ -137,6 +140,21 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
                     break;
                 case NOTIFICATION_STOP:
                     break;
+                case CHANGE_SPEED:
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        boolean up = intent.getBooleanExtra(EXTRA_SPEED, true);
+                        float speed = mp.getPlaybackParams().getSpeed();
+                        if (up){
+                            speed += 0.1;
+                        } else {
+                            speed -= 0.1;
+                        }
+                        Log.d(TAG, "speed:" + speed);
+                        mp.setPlaybackParams(mp.getPlaybackParams().setSpeed(speed));
+                        prefs.edit().putFloat(EXTRA_SPEED, speed).apply();
+                    }
+                    break;
+
             }
         }
         return START_STICKY;
@@ -161,7 +179,6 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
         mp.setOnCompletionListener(this);
         mp.setOnPreparedListener(this);
         mp.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
-
         return mp;
     }
 
@@ -304,6 +321,9 @@ public class PlayingServiceNew extends Service implements MediaPlayer.OnPrepared
     public void onPrepared(MediaPlayer mp) {
         myApplication.getPlayingSession().totalDuration = mp.getDuration();
         myApplication.getPlayingSession().isPlaying = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mp.setPlaybackParams(mp.getPlaybackParams().setSpeed(prefs.getFloat(EXTRA_SPEED, 1)));
+        }
         mp.start();
         updateCurrentTime();
     }

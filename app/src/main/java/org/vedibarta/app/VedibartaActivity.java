@@ -39,6 +39,7 @@ import static org.vedibarta.app.DownloadService.EXTRA_PAR_TITLE;
 import static org.vedibarta.app.DownloadService.EXTRA_POSITION;
 import static org.vedibarta.app.DownloadService.EXTRA_RECEIVER;
 import static org.vedibarta.app.DownloadService.EXTRA_TOTAL_TRACKS;
+import static org.vedibarta.app.DownloadService.RESULT_CODE_ERROR;
 import static org.vedibarta.app.DownloadService.RESULT_CODE_FINISH;
 import static org.vedibarta.app.DownloadService.RESULT_CODE_PROGRESS;
 import static org.vedibarta.app.DownloadService.RESULT_CODE_START_DOWNLOAD;
@@ -71,13 +72,13 @@ public class VedibartaActivity extends AppCompatActivity implements OnStartPlayC
                         new MyTabListener<>(this, "parashot",
                                 FragmentParashot.class));
         actionBar.addTab(tab1);
-        Tab tab2 = actionBar
-                .newTab()
-                .setText(R.string.downloads)
-                .setTabListener(
-                        new MyTabListener<>(this, "horadot",
-                                FragmentHoradot.class));
-        actionBar.addTab(tab2);
+//        Tab tab2 = actionBar
+//                .newTab()
+//                .setText(R.string.downloads)
+//                .setTabListener(
+//                        new MyTabListener<>(this, "horadot",
+//                                FragmentHoradot.class));
+//        actionBar.addTab(tab2);
         Tab tab3 = actionBar
                 .newTab()
                 .setText(R.string.feedback)
@@ -250,6 +251,9 @@ public class VedibartaActivity extends AppCompatActivity implements OnStartPlayC
                 if (parashot instanceof FragmentParashot) {
                     ((FragmentParashot) parashot).refreshList();
                 }
+                break;
+            case RESULT_CODE_ERROR:
+                Toast.makeText(this, resultData.getString("error"), Toast.LENGTH_LONG).show();
                 break;
         }
     }
